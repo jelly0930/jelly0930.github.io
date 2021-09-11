@@ -142,7 +142,7 @@
 </nav>
 
     <div class="banner" id="banner" parallax=true
-         style="background: url('/img/default.png') no-repeat center center;
+         style="background: url('/img/bg3.jpg') no-repeat center center;
            background-size: cover;">
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
@@ -180,7 +180,7 @@
           
             <div class="link-avatar my-auto">
               <img src="/img/favicon.png" srcset="/img/loading.gif" lazyload alt="Fluid Blog"
-                   onerror="this.onerror=null; this.src=this.srcset='/img/avatar.png'"/>
+                   onerror="this.onerror=null; this.src=this.srcset='/img/head.jpeg'"/>
             </div>
           
           <div class="link-text">
@@ -198,7 +198,7 @@
           
             <div class="link-avatar my-auto">
               <img src="/img/favicon.png" srcset="/img/loading.gif" lazyload alt="Fluid Docs"
-                   onerror="this.onerror=null; this.src=this.srcset='/img/avatar.png'"/>
+                   onerror="this.onerror=null; this.src=this.srcset='/img/head.jpeg'"/>
             </div>
           
           <div class="link-text">
@@ -216,7 +216,7 @@
           
             <div class="link-avatar my-auto">
               <img src="/img/favicon.png" srcset="/img/loading.gif" lazyload alt="Fluid Repo"
-                   onerror="this.onerror=null; this.src=this.srcset='/img/avatar.png'"/>
+                   onerror="this.onerror=null; this.src=this.srcset='/img/head.jpeg'"/>
             </div>
           
           <div class="link-text">
@@ -236,6 +236,23 @@
   <article class="comments" id="comments" lazyload>
     
     
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"KoUUnhC8sqDPadKwA0C4f83s-gzGzoHsz","appKey":"FLKClsTKX9X9TPMSO1z9FK1T","placeholder":"说点什么","path":"window.location.pathname","avatar":"robohash","meta":["nick","mail","link"],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false,"requiredFields":[]},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
 
   </article>
 

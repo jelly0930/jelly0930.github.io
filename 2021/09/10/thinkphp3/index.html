@@ -235,6 +235,12 @@
             <!-- SEO header -->
             <h1 style="display: none">总结 ThinkPHP3 代码审计方法</h1>
             
+              <p class="note note-info">
+                
+                  本文最后更新于：2021年9月10日 下午
+                
+              </p>
+            
             <div class="markdown-body">
               <h1 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h1><p>ThinkPHP 是国内著名的 php开发框架，基于MVC模式，最早诞生于2006年初，原名FCS，2007年元旦正式更名为ThinkPHP</p>
 <p>本文主要分析 ThinkPHP v3 的程序代码，通过对 TP3 代码结构分析、底层代码分析、经典历史漏洞复现分析等，学习如何审计 MVC 模式的程序代码，遇到使用 TP3 的代码能够独立审计。即使不想对 TP3 代码做过多了解的小伙伴通过本文也能对TP3程序的漏洞有个清晰的认识</p>
@@ -751,6 +757,12 @@
                   <article class="post-prev col-6">
                     
                     
+                      <a href="/2021/09/11/seacms/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">通过 SeaCMS 学习 php 代码审计</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
                   </article>
                   <article class="post-next col-6">
                     
@@ -773,6 +785,23 @@
                   
                 
                 
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"KoUUnhC8sqDPadKwA0C4f83s-gzGzoHsz","appKey":"FLKClsTKX9X9TPMSO1z9FK1T","placeholder":"说点什么","path":"window.location.pathname","avatar":"robohash","meta":["nick","mail","link"],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false,"requiredFields":[]},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
 
               </article>
             

