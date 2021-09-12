@@ -1,0 +1,800 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/icon.png">
+  <link rel="icon" href="/img/icon.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="jelly">
+  <meta name="keywords" content="">
+  
+  <title>通过 DedeCMS 学习 php 代码审计 - jelly&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"14de5c0cf6db6044f06b32ef50694a98","google":"G-1S553HH16G","gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Jelly's blog</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/doll.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="通过 DedeCMS 学习 php 代码审计">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-09-12 11:53" pubdate>
+        2021年9月12日 中午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      7.9k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      97
+       分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">通过 DedeCMS 学习 php 代码审计</h1>
+            
+              <p class="note note-info">
+                
+                  本文最后更新于：41 分钟前
+                
+              </p>
+            
+            <div class="markdown-body">
+              <h1 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h1><p><strong>织梦</strong>(DedeCms)也是一个国产内容管理系统，曾经爆出过众多漏洞，甚至还有人开发了dedecms漏洞一键扫描器</p>
+<p>DedeCms和PHPCMS活跃的年代差不多，大概是2015年前，目前也都少部分人在使用</p>
+<p>DedeCMS 目前最新版是dedecms v5.7sp2，最后更新时间大概为2018年</p>
+<p>这里就不记录安装过程了，通过安装过程获知默认后台密码是admin/admin</p>
+<h1 id="0x01-全局分析"><a href="#0x01-全局分析" class="headerlink" title="0x01 全局分析"></a>0x01 全局分析</h1><p>个人习惯是对程序做一个比较明晰的全局分析，至少要知道程序的入口文件是什么流程，程序有多少入口文件，对外部数据有什么全局处理方式等等</p>
+<p>对dedecms对全局分析时，首先选择了根目录下的index.php，慢慢分析会发现，dedecms是一个多入口文件的形式，不过每个入口文件的流程都大致相同。</p>
+<p>通过全局分析得知dedecms大致有3个主要功能，也通过不同的入口文件进入</p>
+<p>1）网站前台首页，没有什么功能点</p>
+<p>2）会员中心，默认是关闭该功能的，需要后台打开</p>
+<p>3）管理员后台</p>
+<h2 id="跟踪前台index-php的流程"><a href="#跟踪前台index-php的流程" class="headerlink" title="跟踪前台index.php的流程"></a>跟踪前台index.php的流程</h2><p>首先跟一遍index.php的流程，index.php首先会加载common.inc.php，就先看看这个文件会做什么</p>
+<h3 id="include-common-inc-php"><a href="#include-common-inc-php" class="headerlink" title="include/common.inc.php"></a>include/common.inc.php</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">//  定义常量</span><br><span class="hljs-comment">//	检查GPC数据是否为cfg等系统定义变量</span><br>CheckRequest()<br><span class="hljs-comment">//	使用addslashes()过滤GPC数据，并注册GPC数据到程序变量</span><br>_RunMagicQuotes()<br><span class="hljs-comment">//	如果存在文件上传的变量，加载文件上传的安全函数</span><br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$_FILES</span>)&#123;<span class="hljs-keyword">require_once</span>(DEDEINC.<span class="hljs-string">&#x27;/uploadsafe.inc.php&#x27;</span>);&#125;<br><span class="hljs-comment">//	数据库配置文件，里面是数据库账号密码相关变量信息</span><br><span class="hljs-keyword">require_once</span>(DEDEDATA.<span class="hljs-string">&#x27;/common.inc.php&#x27;</span>);<br><span class="hljs-comment">//	自动加载类库处理</span><br><span class="hljs-keyword">require_once</span>(DEDEINC.<span class="hljs-string">&#x27;/autoload.inc.php&#x27;</span>);<br><span class="hljs-comment">//	引入数据库类，这步会直接连接数据库，并返回一个数据库对象$db=$dsql</span><br><span class="hljs-keyword">require_once</span>(DEDEINC.<span class="hljs-string">&#x27;/dedesqli.class.php&#x27;</span>);<br><span class="hljs-comment">//	全局常用函数</span><br><span class="hljs-keyword">require_once</span>(DEDEINC.<span class="hljs-string">&#x27;/common.func.php&#x27;</span>);<br><span class="hljs-comment">// 	模块MVC框架需要的控制器和模型基类</span><br><span class="hljs-keyword">require_once</span>(DEDEINC.<span class="hljs-string">&#x27;/control.class.php&#x27;</span>);<br><span class="hljs-keyword">require_once</span>(DEDEINC.<span class="hljs-string">&#x27;/model.class.php&#x27;</span>);<br></code></pre></td></tr></table></figure>
+
+<p>common.inc.php 做了很多程序的初始化工作，代码审计时需要重点关注程序处理GPC这些外部数据的方式</p>
+<p>common.inc.php 全局处理数据的代码：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">foreach</span>(<span class="hljs-keyword">Array</span>(<span class="hljs-string">&#x27;_GET&#x27;</span>,<span class="hljs-string">&#x27;_POST&#x27;</span>,<span class="hljs-string">&#x27;_COOKIE&#x27;</span>) <span class="hljs-keyword">as</span> <span class="hljs-variable">$_request</span>)<br>&#123;<br>		<span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$$_request</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$_k</span> =&gt; <span class="hljs-variable">$_v</span>)<br>		&#123;<br>				<span class="hljs-keyword">if</span>(<span class="hljs-variable">$_k</span> == <span class="hljs-string">&#x27;nvarname&#x27;</span>) $&#123;<span class="hljs-variable">$_k</span>&#125; = <span class="hljs-variable">$_v</span>;<br>				<span class="hljs-keyword">else</span> $&#123;<span class="hljs-variable">$_k</span>&#125; = _RunMagicQuotes(<span class="hljs-variable">$_v</span>);<br>		&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到这个时期的DEDECMS也是使用了<code>$$</code> 直接注册了GPC的变量，有可能存在变量覆盖的问题</p>
+<h3 id="uploadsafe-inc-php"><a href="#uploadsafe-inc-php" class="headerlink" title="uploadsafe.inc.php"></a>uploadsafe.inc.php</h3><p>这里再关心下文件上传的安全函数</p>
+<blockquote>
+<p>include/uploadsafe.inc.php</p>
+</blockquote>
+<p><code>$cfg_not_allowall</code> 为上传文件名后缀的黑名单，后面具体分析限制的逻辑</p>
+<p><code>$imtypes</code> 为一些图片的MIME类型</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-variable">$cfg_not_allowall</span> = <span class="hljs-string">&quot;php|pl|cgi|asp|aspx|jsp|php3|shtm|shtml&quot;</span>;<br><span class="hljs-variable">$keyarr</span> = <span class="hljs-keyword">array</span>(<span class="hljs-string">&#x27;name&#x27;</span>, <span class="hljs-string">&#x27;type&#x27;</span>, <span class="hljs-string">&#x27;tmp_name&#x27;</span>, <span class="hljs-string">&#x27;size&#x27;</span>);<br><span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$_FILES</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$_key</span>=&gt;<span class="hljs-variable">$_value</span>)<br>&#123;<br>    <span class="hljs-variable">$$_key</span> = <span class="hljs-variable">$_FILES</span>[<span class="hljs-variable">$_key</span>][<span class="hljs-string">&#x27;tmp_name&#x27;</span>];<br>    $&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_name&#x27;</span>&#125; = <span class="hljs-variable">$_FILES</span>[<span class="hljs-variable">$_key</span>][<span class="hljs-string">&#x27;name&#x27;</span>];<br>    $&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_type&#x27;</span>&#125; = <span class="hljs-variable">$_FILES</span>[<span class="hljs-variable">$_key</span>][<span class="hljs-string">&#x27;type&#x27;</span>] = preg_replace(<span class="hljs-string">&#x27;#[^0-9a-z\./]#i&#x27;</span>, <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$_FILES</span>[<span class="hljs-variable">$_key</span>][<span class="hljs-string">&#x27;type&#x27;</span>]);<br>    $&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_size&#x27;</span>&#125; = <span class="hljs-variable">$_FILES</span>[<span class="hljs-variable">$_key</span>][<span class="hljs-string">&#x27;size&#x27;</span>] = preg_replace(<span class="hljs-string">&#x27;#[^0-9]#&#x27;</span>,<span class="hljs-string">&#x27;&#x27;</span>,<span class="hljs-variable">$_FILES</span>[<span class="hljs-variable">$_key</span>][<span class="hljs-string">&#x27;size&#x27;</span>]);<br>    <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">empty</span>($&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_name&#x27;</span>&#125;) &amp;&amp; (preg_match(<span class="hljs-string">&quot;#\.(&quot;</span>.<span class="hljs-variable">$cfg_not_allowall</span>.<span class="hljs-string">&quot;)$#i&quot;</span>,$&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_name&#x27;</span>&#125;) || !preg_match(<span class="hljs-string">&quot;#\.#&quot;</span>, $&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_name&#x27;</span>&#125;)) )<br>    &#123;<br>      	<span class="hljs-keyword">if</span>(!defined(<span class="hljs-string">&#x27;DEDEADMIN&#x27;</span>))<br>        &#123;<br>            <span class="hljs-keyword">exit</span>(<span class="hljs-string">&#x27;Not Admin Upload filetype not allow !&#x27;</span>);<br>        &#125;<br>    &#125;<br>    <span class="hljs-variable">$imtypes</span> = <span class="hljs-keyword">array</span><br>    (<br>        <span class="hljs-string">&quot;image/pjpeg&quot;</span>, <span class="hljs-string">&quot;image/jpeg&quot;</span>, <span class="hljs-string">&quot;image/gif&quot;</span>, <span class="hljs-string">&quot;image/png&quot;</span>, <br>        <span class="hljs-string">&quot;image/xpng&quot;</span>, <span class="hljs-string">&quot;image/wbmp&quot;</span>, <span class="hljs-string">&quot;image/bmp&quot;</span><br>    );<br>    <span class="hljs-keyword">if</span>(in_array(strtolower(trim($&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_type&#x27;</span>&#125;)), <span class="hljs-variable">$imtypes</span>))<br>    &#123;<br>        <span class="hljs-variable">$image_dd</span> = @getimagesize(<span class="hljs-variable">$$_key</span>);<br>        <span class="hljs-keyword">if</span> (!is_array(<span class="hljs-variable">$image_dd</span>))<br>        &#123;<br>            <span class="hljs-keyword">exit</span>(<span class="hljs-string">&#x27;Upload filetype not allow !&#x27;</span>);<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里结合实际例子来分析上诉代码，上传一个名为2.jpg的正常文件，<code>$_FILES</code>数组如下图</p>
+<img src="img/dedecms/image-20210716163532045.png" srcset="/img/loading.gif" lazyload alt="image-20210716163532045" style="zoom:50%;" />
+
+<p><code>uploadsafe.inc.php</code>会注册<code>$_FILES</code>中数据到全局变量，在实例中便会注册以下变量</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-variable">$litpic</span> = <span class="hljs-string">&quot;/Applications/MAMP/tmp/php/php8bhoXG&quot;</span><br><span class="hljs-variable">$litpic_name</span> = <span class="hljs-string">&quot;2.jpg&quot;</span><br><span class="hljs-variable">$litpic_type</span> = <span class="hljs-string">&quot;image/jepg&quot;</span><br><span class="hljs-variable">$litpic_stze</span> = <span class="hljs-string">&quot;4&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p>然后先看第一个文件上传的限制：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">if</span>(<br>  	!<span class="hljs-keyword">empty</span>($&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_name&#x27;</span>&#125;) &amp;&amp; <br>  	(	preg_match(<span class="hljs-string">&quot;#\.(&quot;</span>.<span class="hljs-variable">$cfg_not_allowall</span>.<span class="hljs-string">&quot;)$#i&quot;</span>,$&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_name&#x27;</span>&#125;) || !preg_match(<span class="hljs-string">&quot;#\.#&quot;</span>, $&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_name&#x27;</span>&#125;)	) <br>)&#123;<br>  	<span class="hljs-keyword">if</span>(!defined(<span class="hljs-string">&#x27;DEDEADMIN&#x27;</span>))&#123;<br>    		<span class="hljs-keyword">exit</span>(<span class="hljs-string">&#x27;Not Admin Upload filetype not allow !&#x27;</span>);<br>  	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>第一个if语句块：</p>
+<ul>
+<li><p>条件1：<code>$_FILES[$_key][&#39;name&#39;]</code>即2.jpg，若上传的文件名不为空，该条件为真</p>
+</li>
+<li><p>条件2是个或条件，满足其一即可</p>
+<ul>
+<li>条件2.1：<code>$_FILES[$_key][&#39;name&#39;]</code>即2.jpg，若后缀名在黑名单中该条件为真</li>
+<li>条件2.2：<code>$_FILES[$_key][&#39;name&#39;]</code>即2.jpg，若没有符号<code>.</code>，即无后缀文件，该条件为真</li>
+</ul>
+</li>
+</ul>
+<p>通过第一个if判断会进入第二个if判断，<code>DEDEADMIN</code>常量未定义会直接退出程序。全局搜索了<code>DEDEADMIN</code>常量，如果是在后台模块，该常量会在<code>dede/config.php</code>就已经定义了。如果在前台首页或者更用户中心页面，该变量没有定义</p>
+<p>所以第一个文件上传限制的是：如果用户上传的功能点不在后台，上传的文件将会受到黑名单限制</p>
+<hr>
+<p>再来看看第二个文件上传的限制：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-variable">$imtypes</span> = <span class="hljs-keyword">array</span><br>  (<br>      <span class="hljs-string">&quot;image/pjpeg&quot;</span>, <span class="hljs-string">&quot;image/jpeg&quot;</span>, <span class="hljs-string">&quot;image/gif&quot;</span>, <span class="hljs-string">&quot;image/png&quot;</span>, <br>      <span class="hljs-string">&quot;image/xpng&quot;</span>, <span class="hljs-string">&quot;image/wbmp&quot;</span>, <span class="hljs-string">&quot;image/bmp&quot;</span><br>  );<br>  <span class="hljs-keyword">if</span>(in_array(strtolower(trim($&#123;<span class="hljs-variable">$_key</span>.<span class="hljs-string">&#x27;_type&#x27;</span>&#125;)), <span class="hljs-variable">$imtypes</span>))<br>  &#123;<br>      <span class="hljs-variable">$image_dd</span> = @getimagesize(<span class="hljs-variable">$$_key</span>);<br>      <span class="hljs-keyword">if</span> (!is_array(<span class="hljs-variable">$image_dd</span>))<br>      &#123;<br>          <span class="hljs-keyword">exit</span>(<span class="hljs-string">&#x27;Upload filetype not allow !&#x27;</span>);<br>      &#125;<br>  &#125;<br></code></pre></td></tr></table></figure>
+
+<p>若 <code>$_FILES[$_key][&#39;type&#39;]</code> 即image/jpeg，在<code>$imtypes</code>中，则进入下一层判断。</p>
+<p><code>$$_key</code>此时为上传的临时文件，来自<code>$_FILES[$_key][&#39;tmp_name&#39;]</code>，临时文件将通过<code>getimagesize()</code>来获取图像信息，作为安全人员，应该要对这个函数敏感一点了，<code>getimagesize()</code>识别到图像时，会返回一个包含图片信息的数组，当传入的文件不为图像时，会返回false，但是该函数可以通过伪造文件头绕过</p>
+<p>所以第二个文件上传的限制意图为，当上传的文件MIME类型为图片时，将会通过<code>getimagesize()</code>二次验证传入的是否为图片</p>
+<p>综上，可以看出这个底层的文件上传安全函数并没有限制的很死，大概的限制意思为：如果用户上传的功能点不在后台，上传的文件将会受到黑名单限制。如果当前文件为图片类型，则会通过<code>getimagesize()</code>再次判断文件是否为图片类型。若上传的文件在后台，MIME类型不为图片则没有限制</p>
+<h3 id="加载视图类文件"><a href="#加载视图类文件" class="headerlink" title="加载视图类文件"></a>加载视图类文件</h3><p>dedecms还会加载一个视图类文件include/arc.partview.class.php，里面定义了一个视图类<code>class PartView</code></p>
+<p>然后就会实例化一个视图加载类<code>$pv = new PartView();</code>，然后利用<code>$pv</code>去加载html这种静态模板，呈现到网页中。这里算是把<strong>视图</strong>和程序分开了</p>
+<p>至于具体怎么实现的，因为和代码审计相关不大，而且我也没有看懂，这里就不讲究它的逻辑了</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>整个流程下来感觉dedecms符合那个时代的cms特点，而且也是全局注册了外部变量。dedecms有特点之处在于使用视图类把html和php文件划分。但index.php文件明显只是一个静态文件，没有较多功能的实现，也没有像phpcms那样index.php作为入口文件负责接收请求转发到其他功能代码中</p>
+<p>那程序中的功能到底是怎么实现的呢？</p>
+<p>最后黑盒测试一下前台的功能点，功能点不多，也明显看处前台是一个多入口处理，每个功能是分开的</p>
+<img src="img/dedecms/image-20210716112934422.png" srcset="/img/loading.gif" lazyload alt="image-20210716112934422" style="zoom: 33%;" />
+
+<h2 id="跟踪后台流程"><a href="#跟踪后台流程" class="headerlink" title="跟踪后台流程"></a>跟踪后台流程</h2><p>dedecms的后台入口位于<code>dede/index.php</code>，默认后台目录为<code>dede</code>，官方建议修改后台目录，在寻找dedecms的后台目录时可以在字典加上dede爆破一下</p>
+<blockquote>
+<p>dede/index.php</p>
+</blockquote>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span>(dirname(<span class="hljs-keyword">__FILE__</span>).<span class="hljs-string">&quot;/config.php&quot;</span>);<br><span class="hljs-comment">//	加inc_menu_map.php和载静态模板</span><br><span class="hljs-keyword">require</span>(DEDEADMIN.<span class="hljs-string">&#x27;/inc/inc_menu_map.php&#x27;</span>);<br><span class="hljs-keyword">include</span>(DEDEADMIN.<span class="hljs-string">&#x27;/templets/index2.htm&#x27;</span>);<br></code></pre></td></tr></table></figure>
+
+<p>后台入口文件的初始化主要加载<code>dede/config.php</code>，这里重点关注下这个文件</p>
+<h3 id="dede-config-php"><a href="#dede-config-php" class="headerlink" title="dede/config.php"></a>dede/config.php</h3><blockquote>
+<p>dede/config.php</p>
+</blockquote>
+<p>可以看到<code>config.php</code>也会加载<code>common.inc.php</code>文件，从而处理了外部数据</p>
+<p>同时需要关注的是 <code>config.php</code> 会验证用户的登陆情况，所以后台文件基本都会包含这个config.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">//	加载common.inc.php</span><br><span class="hljs-keyword">require_once</span>(DEDEADMIN.<span class="hljs-string">&#x27;/../include/common.inc.php&#x27;</span>);<br><span class="hljs-comment">//	加载管理员登陆类，里面定义了userLogin类和很多验证用户权限的函数</span><br><span class="hljs-keyword">require_once</span>(DEDEINC.<span class="hljs-string">&#x27;/userlogin.class.php&#x27;</span>);<br><span class="hljs-comment">//	实例化userLogin对象</span><br><span class="hljs-variable">$cuserLogin</span> = <span class="hljs-keyword">new</span> userLogin();<br><span class="hljs-comment">//	验证登陆情况，未登陆跳转到登陆页面</span><br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$cuserLogin</span> --- xxx)<br>  	header(<span class="hljs-string">&quot;location:login.php?gotopage=&quot;</span>.urlencode(<span class="hljs-variable">$dedeNowurl</span>));<br><span class="hljs-comment">//	下面则为登陆后的程序处理</span><br><span class="hljs-comment">//	定义csrf和xss防御函数</span><br><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">csrf_check</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function"><span class="hljs-title">function</span> <span class="hljs-title">XSSClean</span>(<span class="hljs-params"><span class="hljs-variable">$val</span></span>)</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="通过iframe构造完整后台页面"><a href="#通过iframe构造完整后台页面" class="headerlink" title="通过iframe构造完整后台页面"></a>通过iframe构造完整后台页面</h3><p>不过从上面来看后台入口文件还是很单薄，没有实现什么具体功能，也没有转发请求的功能。然后我就使用谷歌调试工具看了下dedecms后台到底加载了哪些文件，原来才发现这个时期的cms还在使用iframe框架，dedecms后台入口文件通过使用iframe框架加载了<strong>菜单地图文件</strong>和<strong>管理后台主体文件</strong>，分别为 <code>dede/index_menu.php</code> 和 <code>dede/index_body.php</code></p>
+<img src="img/dedecms/image-20210716121237443.png" srcset="/img/loading.gif" lazyload alt="image-20210716121237443" style="zoom:50%;" />
+
+<p>上图的代码来自<code>index.php</code>加载的<code>templets/index2.htm</code>文件</p>
+<p> <code>dede/index_menu.php</code> 和 <code>dede/index_body.php</code> 通过iframe被嵌入在<code>index.php</code>页面中，可以看到的是dedecms在后台基本还是使用的多入口文件去处理每个功能，只是使用iframe框架让所有功能在<code>index.php</code>页面下显示了而已</p>
+<h3 id="小结-1"><a href="#小结-1" class="headerlink" title="小结"></a>小结</h3><p>通过全局分析，感觉dedecms这个系统还是比较”老气“的，和phpcms的处理方式还是有很大不同的，感觉上phpcms的处理更加接近mvc的思想，虽然看到dedecms也声称做了mvc的架构，菜鸡的我是否还看不到那一层</p>
+<h1 id="0x02-漏洞审计"><a href="#0x02-漏洞审计" class="headerlink" title="0x02 漏洞审计"></a>0x02 漏洞审计</h1><p>本次将采用结合功能点进行代码审计的思路，试一试这种思路的特点</p>
+<h2 id="任意文件上传"><a href="#任意文件上传" class="headerlink" title="任意文件上传"></a>任意文件上传</h2><h3 id="普普通通的绕过"><a href="#普普通通的绕过" class="headerlink" title="普普通通的绕过"></a>普普通通的绕过</h3><p>后台:【核心】-【常用操作】-【所有档案列表】-【添加文档】，该功能可以发布文章，而且具有文件上传的功能</p>
+<img src="img/dedecms/image-20210716160757480.png" srcset="/img/loading.gif" lazyload alt="image-20210716160757480" style="zoom: 33%;" />
+
+<p>该处首先具有前端限制，上传 .jpg 后缀文件，结合brup抓包，发现处理上传功能的文件为<code>dede/archives_do.php</code></p>
+<p>然后结合调试，来看看具体代码</p>
+<blockquote>
+<p>dede/archives_do.php</p>
+</blockquote>
+<p>入口文件通过 config.php 会实现权限认证和一些外部参数过滤注册</p>
+<p>我们这里上传文件会带有 <code>$_FILES</code> 参数，上面通过全局分析得知会触发<code>uploadsafe.inc.php</code>的过滤</p>
+<p>过滤后，通过<code>AdminUpload()</code>实现最终文件上传</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span>(dirname(<span class="hljs-keyword">__FILE__</span>).<span class="hljs-string">&#x27;/config.php&#x27;</span>);<br><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-variable">$dopost</span>==<span class="hljs-string">&quot;uploadLitpic&quot;</span>)<br>&#123;<br>    <span class="hljs-variable">$upfile</span> = AdminUpload(<span class="hljs-string">&#x27;litpic&#x27;</span>, <span class="hljs-string">&#x27;imagelit&#x27;</span>, <span class="hljs-number">0</span>, <span class="hljs-literal">false</span> );<br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>include/helpers/upload.helper.php</p>
+</blockquote>
+<p>最终实现文件上传的<code>AdminUpload()</code>来自<code>upload.helper.php</code></p>
+<p>传入<code>AdminUpload()</code>的<code>$ftype</code>固定为<code>imagelit</code>，则一定会进入对应的检测判断</p>
+<p>在检测判断代码中，<code>$sparr</code>定义了一个MIME Type白名单，若上传文件的MIME Type不在白名单中直接退出，MIME Type我们可控，所以这里一定要设置MIME Type为图片类型</p>
+<p>但这里要注意的一点是，当MIME Type为图片类型时，在安全过滤文件<code>uploadsafe.inc.php</code>检测中，还会通过<code>getimagesize()</code>再次判断文件是否为图片类型，不够这里我们也可以绕过</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">AdminUpload</span>(<span class="hljs-params"><span class="hljs-variable">$uploadname</span>, <span class="hljs-variable">$ftype</span>=<span class="hljs-string">&#x27;image&#x27;</span>, <span class="hljs-variable">$rnddd</span>=<span class="hljs-number">0</span>, <span class="hljs-variable">$watermark</span>=<span class="hljs-literal">TRUE</span>, <span class="hljs-variable">$filetype</span>=<span class="hljs-string">&#x27;&#x27;</span> </span>)</span><br><span class="hljs-function"></span>&#123;<br>		<span class="hljs-keyword">if</span>(<span class="hljs-variable">$ftype</span>==<span class="hljs-string">&#x27;image&#x27;</span> || <span class="hljs-variable">$ftype</span>==<span class="hljs-string">&#x27;imagelit&#x27;</span>)<br>    &#123;<br>       <span class="hljs-variable">$sparr</span> = <span class="hljs-keyword">Array</span>(<span class="hljs-string">&#x27;image/pjpeg&#x27;</span>, <span class="hljs-string">&#x27;image/jpeg&#x27;</span>, <span class="hljs-string">&#x27;image/gif&#x27;</span>, <span class="hljs-string">&#x27;image/png&#x27;</span>, <span class="hljs-string">&#x27;image/xpng&#x27;</span>, <span class="hljs-string">&#x27;image/wbmp&#x27;</span>);<br>      <span class="hljs-keyword">if</span>(!in_array(<span class="hljs-variable">$file_type</span>, <span class="hljs-variable">$sparr</span>)) <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    &#125;<br>		<span class="hljs-variable">$fileurl</span> = <span class="hljs-variable">$filedir</span>.<span class="hljs-string">&#x27;/&#x27;</span>.<span class="hljs-variable">$filename</span>.<span class="hljs-string">&#x27;.&#x27;</span>.<span class="hljs-variable">$file_sname</span>;<br>		<span class="hljs-variable">$rs</span> = move_uploaded_file(<span class="hljs-variable">$file_tmp</span>, <span class="hljs-variable">$cfg_basedir</span>.<span class="hljs-variable">$fileurl</span>);<br></code></pre></td></tr></table></figure>
+
+<p>最后梳理一下，该功能点，系统只做了两个限制，MIMI Type为图片类型，可控。但MIME Type为图片类型时会通过<code>getimagesize()</code>检测，这里也可绕过。下面将来复现一下，看是否可以利用</p>
+<h4 id="漏洞验证"><a href="#漏洞验证" class="headerlink" title="漏洞验证"></a>漏洞验证</h4><p>保证Content-Type为图片类型，构造图片的文件头，绕过文件上传的限制，并且会返回上传文件名和路径</p>
+<img src="img/dedecms/image-20210716175555544.png" srcset="/img/loading.gif" lazyload alt="image-20210716175555544" style="zoom:50%;" />
+
+<p>访问这个文件，完美</p>
+<img src="img/dedecms/image-20210716175751931.png" srcset="/img/loading.gif" lazyload alt="image-20210716175751931" style="zoom:50%;" />
+
+<p>小结一下：分析这一大堆，似乎还没有黑盒测来的快。。。一般黑盒直接来个GIF89a可能就中奖了</p>
+<h3 id="尴尬的文件上传"><a href="#尴尬的文件上传" class="headerlink" title="尴尬的文件上传"></a>尴尬的文件上传</h3><p>接着看看后台有什么功能点，然后又发现一个文件上传的位置：【核心】-【常用操作】-【附件管理】- 【文件式管理器】</p>
+<p>突然发现这里竟然可以直接上传任意文件。。。。这个系统这么刚的吗？</p>
+<p>看了半天代码很尴尬，然后我就不太想看后台的文件上传了。。。。</p>
+<img src="img/dedecms/image-20210716182546966.png" srcset="/img/loading.gif" lazyload alt="image-20210716182546966" style="zoom:50%;" />
+
+<h3 id="有趣的文件上传"><a href="#有趣的文件上传" class="headerlink" title="有趣的文件上传"></a>有趣的文件上传</h3><p>后面翻阅dedecms历史漏洞，发现<strong>会员中心</strong>处存在一个文件上传漏洞。后面仔细研究了一下，其实也只有管理员权限才能上传，实际利用鸡肋，有管理员权限了不如直接进入后台任意文件上传，不过这个漏洞产生的原因可以学学</p>
+<p>漏洞位于会员中心处，需要在dedecms打开会员功能，另外需要使用管理员账号打卡会员中心的页面</p>
+<p>进入member/article_add.php发布文章，选择下面的富文本编辑器插入图片</p>
+<img src="img/dedecms/image-20210719155504974.png" srcset="/img/loading.gif" lazyload alt="image-20210719155504974" style="zoom: 33%;" />
+
+<p>选择好文件并上传抓包</p>
+<img src="img/dedecms/image-20210719155700250.png" srcset="/img/loading.gif" lazyload alt="image-20210719155700250" style="zoom:50%;" />
+
+<p>处理该文件上传的文件为<code>select_images_post.php</code>，下面具体看看代码</p>
+<blockquote>
+<p>include/dialog/select_images_post.php</p>
+</blockquote>
+<p>看代码大致知道系统只允许上传图片格式的文件，然后具体有3个限制条件：</p>
+<ul>
+<li>加载<code>include/dialog/config.php</code>，该文件会验证管理员身份，同时<code>config.php</code>会加载<code>common.inc.php</code>做基础的文件上传过滤。由全局分析知道，我们此时没有位于管理员目录，上传文件后缀名有黑名单限制，不能为php，目前知道服务器只解析php后缀文件</li>
+</ul>
+<p>但在下面第二行代码，会去除一些特殊符号，那我们可以上传<code>p*hp</code>这样的后缀，可以绕过上面的判断，然后再这一步正好又变成了能解析的后缀，漏洞关键点就在这里</p>
+<ul>
+<li><p><code>$cfg_imgtype</code>为<code> jpg|gif|png</code>，但这里匹配十分轻松，只要存在<code>.jpg</code>这样的字样就能绕过，并没有限制是后缀名</p>
+</li>
+<li><p>最后对mime type类型做了检测，最终上传文件</p>
+</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span>(dirname(<span class="hljs-keyword">__FILE__</span>).<span class="hljs-string">&quot;/config.php&quot;</span>);<br><span class="hljs-variable">$imgfile_name</span> = trim(preg_replace(<span class="hljs-string">&quot;#[ \r\n\t\*\%\\\/\?&gt;&lt;\|\&quot;:]&#123;1,&#125;#&quot;</span>, <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$imgfile_name</span>));<br><span class="hljs-keyword">if</span>(!preg_match(<span class="hljs-string">&quot;#\.(&quot;</span>.<span class="hljs-variable">$cfg_imgtype</span>.<span class="hljs-string">&quot;)#i&quot;</span>, <span class="hljs-variable">$imgfile_name</span>))<br>&#123;<br>    ShowMsg(<span class="hljs-string">&quot;你所上传的图片类型不在许可列表，请更改系统对扩展名限定的配置！&quot;</span>, <span class="hljs-string">&quot;-1&quot;</span>);<br>    <span class="hljs-keyword">exit</span>();<br>&#125;<br><span class="hljs-variable">$sparr</span> = <span class="hljs-keyword">Array</span>(<span class="hljs-string">&quot;image/pjpeg&quot;</span>, <span class="hljs-string">&quot;image/jpeg&quot;</span>, <span class="hljs-string">&quot;image/gif&quot;</span>, <span class="hljs-string">&quot;image/png&quot;</span>, <span class="hljs-string">&quot;image/xpng&quot;</span>, <span class="hljs-string">&quot;image/wbmp&quot;</span>);<br><span class="hljs-variable">$imgfile_type</span> = strtolower(trim(<span class="hljs-variable">$imgfile_type</span>));<br><span class="hljs-keyword">if</span>(!in_array(<span class="hljs-variable">$imgfile_type</span>, <span class="hljs-variable">$sparr</span>))<br>&#123;<br>    ShowMsg(<span class="hljs-string">&quot;上传的图片格式错误，请使用JPEG、GIF、PNG、WBMP格式的其中一种！&quot;</span>,<span class="hljs-string">&quot;-1&quot;</span>);<br>    <span class="hljs-keyword">exit</span>();<br>&#125;<br>move_uploaded_file(<span class="hljs-variable">$imgfile</span>, <span class="hljs-variable">$fullfilename</span>) <span class="hljs-keyword">or</span> <span class="hljs-keyword">die</span>(<span class="hljs-string">&quot;上传文件到 <span class="hljs-subst">$fullfilename</span> 失败！&quot;</span>);<br></code></pre></td></tr></table></figure>
+
+<h2 id="xss"><a href="#xss" class="headerlink" title="xss"></a>xss</h2><p>测试发现还是黑盒好测一点，在dedecms后台还是存在很多xss的，本次是在黑盒测试后，在回头审计代码的问题，其实这样白盒审计意义不大，主要记录下思路</p>
+<p>因为dedecms是多入口文件，每个入口文件都需要包含具有全局过滤函数的文件来判断外部数据的安全，如果发现有的文件没有包含这样这种文件，那么这个入口文件可能就存在相关漏洞</p>
+<p>在全局分析中发现并没有对外部数据做xss全局过滤，另外注意到dedecms具有视图类负责显示输出，封装了很多输出的功能，在平时白盒审计xss漏洞需要注意echo，innerHTML这类输出到前端的关键词，但在dedecms中还需要注意视图类封装的输出函数</p>
+<blockquote>
+<p>qrcode.php</p>
+</blockquote>
+<p>qrcode.php及加载的文件都没有做xss过滤，通过common.inc.php会注册全局变量</p>
+<p><code>$id</code>只能为整数类型，<code>$type</code>类型可控</p>
+<p>加载模板<code>qrcode.htm</code>，利用视图类格式化输出<code>$id</code>, <code>$type</code>的值，<code>$type</code>可控，这里就存在xss漏洞</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">require_once</span>(dirname(<span class="hljs-keyword">__FILE__</span>).<span class="hljs-string">&#x27;/../include/common.inc.php&#x27;</span>);<br><span class="hljs-keyword">require_once</span>(DEDEINC.<span class="hljs-string">&#x27;/qrcode.class.php&#x27;</span>);<br><span class="hljs-variable">$type</span> = <span class="hljs-keyword">isset</span>(<span class="hljs-variable">$type</span>)? <span class="hljs-variable">$type</span> : <span class="hljs-string">&#x27;&#x27;</span>;<br><span class="hljs-variable">$id</span> = (<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$id</span>) &amp;&amp; is_numeric(<span class="hljs-variable">$id</span>)) ? <span class="hljs-variable">$id</span> : <span class="hljs-number">0</span>;<br><span class="hljs-variable">$dtp</span> = <span class="hljs-keyword">new</span> DedeTemplate();<br><span class="hljs-variable">$tplfile</span> = DEDETEMPLATE.<span class="hljs-string">&#x27;/plus/qrcode.htm&#x27;</span>;<br><span class="hljs-variable">$dtp</span>-&gt;LoadTemplate(<span class="hljs-variable">$tplfile</span>);<br><span class="hljs-variable">$dtp</span>-&gt;SetVar(<span class="hljs-string">&#x27;id&#x27;</span>,<span class="hljs-variable">$id</span>);<br><span class="hljs-variable">$dtp</span>-&gt;SetVar(<span class="hljs-string">&#x27;type&#x27;</span>,<span class="hljs-variable">$type</span>);<br><span class="hljs-variable">$dtp</span>-&gt;Display();<br></code></pre></td></tr></table></figure>
+
+<p>可以看到这里的触发点<code>$dtp-&gt;SetVar(&#39;type&#39;,$type);</code>，然而在seay这种代码扫描工具中是不会在意这些点的，同样有些框架对sql操作也做了很好的封装，如果只是依靠seay的结果来做代码审计，可能会忽略掉很多关键点</p>
+<p>最后有图有真相</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">http</span>://dede.test:<span class="hljs-number">8888</span>/plus/qrcode.php?id=<span class="hljs-number">1</span>&amp;type=%<span class="hljs-number">22</span>%<span class="hljs-number">3</span>E%<span class="hljs-number">3</span>CScRiPt%<span class="hljs-number">3</span>Ealert(<span class="hljs-number">1</span>)%<span class="hljs-number">3</span>C/ScRiPt%<span class="hljs-number">3</span>E<br></code></pre></td></tr></table></figure>
+
+<img src="img/dedecms/image-20210719110105023.png" srcset="/img/loading.gif" lazyload alt="image-20210719110105023" style="zoom:50%;" />
+
+<h2 id="url-重定向漏洞"><a href="#url-重定向漏洞" class="headerlink" title="url 重定向漏洞"></a>url 重定向漏洞</h2><p>seay似乎没有 url 重定向漏洞的扫描，不过该漏洞审计也比较简单，主要关注能重定向的一些关键词，再看重定向地址是否可控</p>
+<p>这里看一个dedecms出名的url重定向漏洞，网上有很多讲解，xray都有poc</p>
+<blockquote>
+<p>plus/download.php</p>
+</blockquote>
+<p>对<code>$link</code>做了base64解码</p>
+<p>程序中有一个很奇怪的限制，<code>in_array($linkinfo[&#39;host&#39;], $allowed)</code>，然而<code>download.php</code>中却没有<code>$linkinfo</code>这个参数</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-variable">$open</span>==<span class="hljs-number">1</span>)<br>&#123;<br>  	<span class="hljs-variable">$id</span> = <span class="hljs-keyword">isset</span>(<span class="hljs-variable">$id</span>) &amp;&amp; is_numeric(<span class="hljs-variable">$id</span>) ? <span class="hljs-variable">$id</span> : <span class="hljs-number">0</span>;<br>    <span class="hljs-variable">$link</span> = base64_decode(urldecode(<span class="hljs-variable">$link</span>));<br>  	<span class="hljs-keyword">if</span> ( !in_array(<span class="hljs-variable">$linkinfo</span>[<span class="hljs-string">&#x27;host&#x27;</span>], <span class="hljs-variable">$allowed</span>) )<br>    &#123;<br>        ShowMsg(<span class="hljs-string">&#x27;非下载地址，禁止访问&#x27;</span>,<span class="hljs-string">&#x27;javascript:;&#x27;</span>);<br>        <span class="hljs-keyword">exit</span>;<br>    &#125;<br>		header(<span class="hljs-string">&quot;location:<span class="hljs-subst">$link</span>&quot;</span>);<br></code></pre></td></tr></table></figure>
+
+<p>dedecms后台也有一些url重定向漏洞，这里就不多关注这个洞了</p>
+<h2 id="会员中心任意用户密码修改"><a href="#会员中心任意用户密码修改" class="headerlink" title="会员中心任意用户密码修改"></a>会员中心任意用户密码修改</h2><p>这也是dedecms比较出名的一个漏洞，如果通过黑盒测试，可能并测不出这个漏洞，此处漏洞最好的方式就是通过灰盒的方式测试</p>
+<p>功能点位于<strong>会员中心</strong>找回密码处，dedecms默认是关闭会员中心的，需要在后台开启会员中心，为了方便测试，开放了用户注册</p>
+<img src="img/dedecms/image-20210719171019346.png" srcset="/img/loading.gif" lazyload alt="image-20210719171019346" style="zoom: 33%;" />
+
+<p>来看下关键代码：</p>
+<blockquote>
+<p>member/resetpassword.php</p>
+</blockquote>
+<p>1、加载 <code>member/config.php</code>，注意这个 config 文件位于 member 目录，不同于全局分析的 config 文件，这个文件会检测用户在<strong>用户中心模块</strong>的登陆情况，查询的数据表为 <code>dede_member</code>，而<strong>后台模块</strong>查询的数据表是 <code>dede_admin</code>，要注意区分开dede的各个模块查询的数据表和包含的文件</p>
+<p>可以看到 <code>resetpassword.php</code> 主要有4个处理逻辑，由 <code>$dopost</code> 控制，<code>$dopost</code>可控</p>
+<p>1）<code>$dopost</code>默认为空，进入第一个if语句，会加载<code>resetpassword.htm</code>，用于显示找回密码的页面</p>
+<p>2）<code>$dopost == &quot;getpwd&quot;</code>，进入第二个处理逻辑，这是<strong>找回密码第一步</strong>默认处理逻辑，</p>
+<p>3）<code>$dopost == &quot;safequestion&quot;</code>，进入第三个处理逻辑</p>
+<p>4）<code>$dopost == &quot;getpasswd&quot;</code>，将会进入找回密码第二步</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">//	member/resetpassword.php</span><br><span class="hljs-keyword">require_once</span>(dirname(<span class="hljs-keyword">__FILE__</span>).<span class="hljs-string">&quot;/config.php&quot;</span>);<br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$dopost</span> == <span class="hljs-string">&quot;&quot;</span>)<br>&#123;<br>  <span class="hljs-keyword">include</span>(dirname(<span class="hljs-keyword">__FILE__</span>).<span class="hljs-string">&quot;/templets/resetpassword.htm&quot;</span>);<br>&#125;<br><span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$dopost</span> == <span class="hljs-string">&quot;getpwd&quot;</span>)<br>&#123;<br>  	<span class="hljs-comment">// 找回密码第一步</span><br>&#125;<br><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-variable">$dopost</span> == <span class="hljs-string">&quot;safequestion&quot;</span>)<br>&#123;<br>  	<span class="hljs-comment">// 密码问题判断</span><br>&#125;<br><span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(<span class="hljs-variable">$dopost</span> == <span class="hljs-string">&quot;getpasswd&quot;</span>)<br>&#123;<br>  	<span class="hljs-comment">// 找回密码第二步</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>2、抓取<strong>找回密码第一步</strong>的请求包，默认<code>dopost</code>为<strong>getpwd</strong></p>
+<img src="img/dedecms/image-20210719172151073.png" srcset="/img/loading.gif" lazyload alt="image-20210719172151073" style="zoom:50%;" />
+
+<p>进入 <strong>getpwd</strong> 的if语句块，如果设置了密码会加载 <code>resetpassword3.htm</code> 页面，这是输入安全问题的表单，会提交<code>$dopost == &quot;safequestion&quot;</code>，则进入第3个处理逻辑</p>
+<p>没有设置安全密码会退出程序，<code>$dopost==&quot;getpwd&quot;</code> 似乎走不通，但参数都可以控，可以考虑直接进入<code>$dopost == &quot;safequestion&quot;</code></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">//		member/resetpassword.php</span><br><span class="hljs-keyword">elseif</span>(<span class="hljs-variable">$dopost</span> == <span class="hljs-string">&quot;getpwd&quot;</span>)<br>&#123;<br>    <span class="hljs-comment">//以邮件方式取回密码；</span><br>    <span class="hljs-keyword">if</span>(<span class="hljs-variable">$type</span> == <span class="hljs-number">1</span>)&#123;&#125;<br> 		<span class="hljs-comment">//以安全问题取回密码；</span><br>    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-variable">$type</span> == <span class="hljs-number">2</span>)<br>    &#123;<br>      <span class="hljs-keyword">if</span>(<span class="hljs-variable">$member</span>[<span class="hljs-string">&#x27;safequestion&#x27;</span>] == <span class="hljs-number">0</span>)<br>      &#123;<br>            showmsg(<span class="hljs-string">&#x27;对不起您尚未设置安全密码，请通过邮件方式重设密码&#x27;</span>, <span class="hljs-string">&#x27;login.php&#x27;</span>);<br>            <span class="hljs-keyword">exit</span>;<br>      &#125;<br>      <span class="hljs-keyword">require_once</span>(dirname(<span class="hljs-keyword">__FILE__</span>).<span class="hljs-string">&quot;/templets/resetpassword3.htm&quot;</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>3、关注 <code>$dopost == &quot;safequestion&quot; </code> 的if语句块，<code>$row[&#39;safequestion&#39;] </code> 为数据库查询用户设置的安全问题，如果没有设置则为空，然后这里使用 <code>==</code> 弱类型比较，有可能绕过这里的判断</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">//		member/resetpassword.php</span><br><span class="hljs-keyword">if</span>(<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$safequestion</span>)) <span class="hljs-variable">$safequestion</span> = <span class="hljs-string">&#x27;&#x27;</span>;<br><span class="hljs-keyword">if</span>(<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$safeanswer</span>)) <span class="hljs-variable">$safeanswer</span> = <span class="hljs-string">&#x27;&#x27;</span>;<br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$row</span>[<span class="hljs-string">&#x27;safequestion&#x27;</span>] == <span class="hljs-variable">$safequestion</span> &amp;&amp; <span class="hljs-variable">$row</span>[<span class="hljs-string">&#x27;safeanswer&#x27;</span>] == <span class="hljs-variable">$safeanswer</span>)<br>&#123;<br>        sn(<span class="hljs-variable">$mid</span>, <span class="hljs-variable">$row</span>[<span class="hljs-string">&#x27;userid&#x27;</span>], <span class="hljs-variable">$row</span>[<span class="hljs-string">&#x27;email&#x27;</span>], <span class="hljs-string">&#x27;N&#x27;</span>);<br>        <span class="hljs-keyword">exit</span>();<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>当用户没有设置安全问题时，数据库默认的 <code>safequestion=&quot;0&quot;</code> ,  <code>safeanswer=&quot;&quot;</code>，在php中这种数据在弱类型比较很容易相等的</p>
+<p><code>safeanswer=&quot;&quot;</code> ，传入 <code>$safeanswer</code> 为空即可弱类型相等</p>
+<p><code>safequestion=&quot;0&quot;</code> ，但是不能传入 <code>$safequestion</code> 为0，这样会导致 <code>empty()</code> 判断为空，最终被赋值为空，这里利用了一个知识点，记录下：</p>
+<p>==在php中当左右都是<strong>只由数字组成的字符串</strong>进行弱类型比较时，会转换成数字比较==</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-string">&quot;0&quot;</span> == <span class="hljs-string">&quot;00&quot;</span> 	<span class="hljs-comment">//true</span><br><span class="hljs-string">&quot;0&quot;</span> == <span class="hljs-string">&quot;0.0&quot;</span>  <span class="hljs-comment">//true</span><br><span class="hljs-string">&quot;0&quot;</span> == <span class="hljs-string">&quot;0e1&quot;</span>	<span class="hljs-comment">//true</span><br></code></pre></td></tr></table></figure>
+
+<p>所以传入上面其中一个都可以绕过判断，最终的post的数据修改如下，其中id设置为任意值就可以修改为任意用户，id=1默认为admin用户，不过amdin用户在<strong>会员中心模块</strong>默认不能登陆，意义不大</p>
+<p>post 数据的POC：</p>
+<figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs dts">dopost=safequestion<span class="hljs-variable">&amp;gourl</span>=<span class="hljs-variable">&amp;userid</span>=test1<span class="hljs-variable">&amp;mail</span>=test1@qq.com<span class="hljs-variable">&amp;vdcode</span>=ya21<span class="hljs-variable">&amp;type</span>=<span class="hljs-number">2</span><span class="hljs-variable">&amp;safeanswer</span>=<span class="hljs-number">0</span><span class="hljs-variable">&amp;id</span>=<span class="hljs-number">2</span><span class="hljs-variable">&amp;safequestion</span>=<span class="hljs-number">00</span><br></code></pre></td></tr></table></figure>
+
+<p>发送次数据包后，在 <code>dede_pwd_tmp</code> 表中会生成临时的数据，其中pwd为8位随机字符串的<code>key</code>通过md5加密后的值</p>
+<img src="img/dedecms/image-20210719190540440.png" srcset="/img/loading.gif" lazyload alt="image-20210719190540440" style="zoom:50%;" />
+
+<p>4、绕过弱类型判断后，会返回一个地址</p>
+<p>注意里面的id和key参数，这里的key为上面的pwd在md5加密前的值，id为上面的mid，也对应了<code>dede_member</code>表中的用户，通过这两个值，保证在找回密码处能准确修改对应用户的密码</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&#x27;http://dede.test:8888/member/resetpassword.php?dopost=getpasswd<span class="hljs-symbol">&amp;amp;</span>id=2<span class="hljs-symbol">&amp;amp;</span>key=3vnKgJZP&#x27;</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>进入这个地址，注意修改下实体编码，然后会进入<strong>找回密码第二步</strong>，然后直接修改密码就可以了</p>
+<img src="img/dedecms/image-20210719185201559.png" srcset="/img/loading.gif" lazyload alt="image-20210719185201559" style="zoom:50%;" />
+
+<p>小结：最终梳理下来，这里其实就是在用户没有设置密码问题时，后台数据库默认保存为空，并且后台在进行密保问题判断时采用弱类型比较，导致可以绕过，最终结果是，凡是没有设置密码问题的用户，都有密码被任意修改的风险</p>
+<h2 id="会员中心任意用户登陆"><a href="#会员中心任意用户登陆" class="headerlink" title="会员中心任意用户登陆"></a>会员中心任意用户登陆</h2><p><strong>会员中心模块</strong>的入口文件为 <code>member/index.php</code> ，在全局分析的时候并没有分析这个入口，但逻辑应该也大差不差</p>
+<p>这里简单分析下<strong>会员中心模块</strong>入口文件判断用户登陆状态的关键逻辑，一般会先判断用户是否登陆，如果登陆则呈现用户界面。如果未登陆，则跳转到登陆接口，等待用户输入登陆凭证并验证，验证通过后，给当前用户记录cookie信息，用户后续使用cookie正常访问</p>
+<p>在dedecms中<strong>会员中心模块</strong>的入口文件差不多也是这个逻辑，dedecms主要使用<code>include/memberlogin.class.php</code>中<code>MemberLogin</code>类来处理这些逻辑，下面来具体看下代码</p>
+<h3 id="入口文件逻辑"><a href="#入口文件逻辑" class="headerlink" title="入口文件逻辑"></a>入口文件逻辑</h3><p>入口文件主要分为3个逻辑处理，首先通过<code>$uid</code>可以查看对应用户的会员空间，<code>$uid</code>对应数据表<code>dede_member</code>中的<code>userid</code>，即用户名</p>
+<ul>
+<li><p>当<code>$uid</code>为空时，首先会判断用户的登陆状态，如果未登陆就加载登陆框，如果已经登陆，则展现对应用户的个人主页</p>
+</li>
+<li><p>当<code>$uid</code>不为空时，会加载<code>config_space.php</code>文件，其中这个文件会通过<code>GetUserSpaceInfos()</code>获取到<code>$uid</code>用户的空间信息</p>
+</li>
+</ul>
+<p>这里还需要注意 <code>$last_vid </code>，该值来自于cookie，可控。当 <code>$last_vid</code> 为空时，最终将等于 <code>$uid</code>，都为可控参数。而 <code>$last_vid</code> 最终会被写入到cookie中</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">//			member/index.php</span><br><span class="hljs-keyword">if</span>(<span class="hljs-variable">$uid</span>==<span class="hljs-string">&#x27;&#x27;</span>)<br>&#123;<br>  <span class="hljs-keyword">if</span>(!<span class="hljs-variable">$cfg_ml</span>-&gt;IsLogin())<br>  &#123;<br>    <span class="hljs-comment">//加载登陆框</span><br>    ……<br>  &#125;<br>  <span class="hljs-keyword">else</span><br>  &#123;<br>    <span class="hljs-comment">//加载对应$cfg_ml-&gt;M_ID用户的页面</span><br>    ……<br>  &#125;<br>&#125;<br><span class="hljs-keyword">else</span><br>&#123;<br>  <span class="hljs-comment">//会员空间主页</span><br>  <span class="hljs-keyword">require_once</span>(DEDEMEMBER.<span class="hljs-string">&#x27;/inc/config_space.php&#x27;</span>);<br>  <span class="hljs-variable">$last_vid</span> = GetCookie(<span class="hljs-string">&#x27;last_vid&#x27;</span>);<br>  <span class="hljs-keyword">if</span>(<span class="hljs-variable">$last_vid</span>!=<span class="hljs-string">&#x27;&#x27;</span>)&#123;  &#125;<br>  <span class="hljs-keyword">else</span><br>  &#123;<br>    <span class="hljs-variable">$last_vid</span> = <span class="hljs-variable">$uid</span>;<br>  &#125;<br>  PutCookie(<span class="hljs-string">&#x27;last_vid&#x27;</span>, <span class="hljs-variable">$last_vid</span>, <span class="hljs-number">3600</span>*<span class="hljs-number">24</span>, <span class="hljs-string">&#x27;/&#x27;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="会员空间信息的加载"><a href="#会员空间信息的加载" class="headerlink" title="会员空间信息的加载"></a>会员空间信息的加载</h3><p>这里首先看下第三个逻辑处理，会员空间主要通过<code>config_space.php</code>文件加载，具体代码如下：</p>
+<ul>
+<li>会员空间的信息主要通过<code>$uid</code>在数据库中查询得到，其中<code>$uid</code>为用户名信息</li>
+<li>当查询结果为空时会退出程序</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">//		member/inc/config_space.php</span><br><span class="hljs-variable">$_vars</span> = GetUserSpaceInfos();<br><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">GetUserSpaceInfos</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function"></span>&#123;<br>  	<span class="hljs-variable">$query</span> = <span class="hljs-string">&quot;SELECT …… From `#@__member` ……	where m.userid like &#x27;<span class="hljs-subst">$uid</span>&#x27;&quot;</span>;<br>  	<span class="hljs-variable">$_vars</span> = <span class="hljs-variable">$dsql</span>-&gt;GetOne(<span class="hljs-variable">$query</span>);<br>  	<span class="hljs-keyword">if</span>(!is_array(<span class="hljs-variable">$_vars</span>))<br>    &#123;<br>        ShowMsg(<span class="hljs-string">&quot;你访问的用户可能已经被删除！&quot;</span>,<span class="hljs-string">&quot;javascript:;&quot;</span>);<br>        <span class="hljs-keyword">exit</span>();<br>    &#125;<br>  	……<br>    <span class="hljs-keyword">return</span> <span class="hljs-variable">$_vars</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="账号登陆后cookie生成方式"><a href="#账号登陆后cookie生成方式" class="headerlink" title="账号登陆后cookie生成方式"></a>账号登陆后cookie生成方式</h3><p>用户登陆的逻辑这里就先不看了，主要关注下cookie是怎么生成的</p>
+<p>当用户账号密码验证成功后，会有一个保存cookie的操作，对应的是<code>MemberLogin</code>类中的 <code>PutLoginInfo()</code> 方法</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">//	include/memberlogin.class.php::class MemberLogin</span><br><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">PutLoginInfo</span>(<span class="hljs-params"><span class="hljs-variable">$uid</span>, <span class="hljs-variable">$logintime</span>=<span class="hljs-number">0</span></span>)</span><br><span class="hljs-function"></span>&#123;<br>        <span class="hljs-keyword">global</span> <span class="hljs-variable">$cfg_login_adds</span>, <span class="hljs-variable">$dsql</span>;<br>        <span class="hljs-keyword">$this</span>-&gt;M_ID = <span class="hljs-variable">$uid</span>;<br>        <span class="hljs-keyword">$this</span>-&gt;M_LoginTime = time();<br>        <span class="hljs-keyword">if</span>(<span class="hljs-keyword">$this</span>-&gt;M_KeepTime &gt; <span class="hljs-number">0</span>)<br>        &#123;<br>            PutCookie(<span class="hljs-string">&#x27;DedeUserID&#x27;</span>,<span class="hljs-variable">$uid</span>,<span class="hljs-keyword">$this</span>-&gt;M_KeepTime);<br>            PutCookie(<span class="hljs-string">&#x27;DedeLoginTime&#x27;</span>,<span class="hljs-keyword">$this</span>-&gt;M_LoginTime,<span class="hljs-keyword">$this</span>-&gt;M_KeepTime);<br>        &#125;<br>        <span class="hljs-keyword">else</span><br>        &#123;<br>            PutCookie(<span class="hljs-string">&#x27;DedeUserID&#x27;</span>,<span class="hljs-variable">$uid</span>);<br>            PutCookie(<span class="hljs-string">&#x27;DedeLoginTime&#x27;</span>,<span class="hljs-keyword">$this</span>-&gt;M_LoginTime);<br>        &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>跟踪下 <code>PutCookie()</code> 方法，发现将会生成 <code>DedeUserID</code>, <code>DedeUserID__ckMd5</code> 的cookie参数，这里关注一下后面会使用</p>
+<p><code>DedeUserID</code> 的值来自用户的uid，其中 <code>DedeUserID__ckMd5</code> 来自用户的<strong>uid和加密cookie值</strong>的16位md5加密值，</p>
+<p><code>$cfg_cookie_encode</code> 好像是安装dede后随机生成的值，用于加密cookie。不同的dedecms程序这个值不同，一般情况下认为该值是不可控，不可知的。正是利用这一点，程序生成的<code>DedeUserID__ckMd5</code>基本不能伪造，dedecms便可以放心的使用cookie去识别用户的身份</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">//include/helpers/cookie.helper.php</span><br><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">PutCookie</span>(<span class="hljs-params"><span class="hljs-variable">$key</span>, <span class="hljs-variable">$value</span>, <span class="hljs-variable">$kptime</span>=<span class="hljs-number">0</span>, <span class="hljs-variable">$pa</span>=<span class="hljs-string">&quot;/&quot;</span></span>)</span><br><span class="hljs-function"></span>&#123;<br>        <span class="hljs-keyword">global</span> <span class="hljs-variable">$cfg_cookie_encode</span>,<span class="hljs-variable">$cfg_domain_cookie</span>;<br>        setcookie(<span class="hljs-variable">$key</span>, <span class="hljs-variable">$value</span>, time()+<span class="hljs-variable">$kptime</span>, <span class="hljs-variable">$pa</span>,<span class="hljs-variable">$cfg_domain_cookie</span>);<br>        setcookie(<span class="hljs-variable">$key</span>.<span class="hljs-string">&#x27;__ckMd5&#x27;</span>, substr(md5(<span class="hljs-variable">$cfg_cookie_encode</span>.<span class="hljs-variable">$value</span>),<span class="hljs-number">0</span>,<span class="hljs-number">16</span>), time()+<span class="hljs-variable">$kptime</span>, <span class="hljs-variable">$pa</span>,<span class="hljs-variable">$cfg_domain_cookie</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里需要知道的是这里的<code>uid</code>来自数据表<code>dede_member</code>中mid，所以<code>uid</code>这就就决定了用户的身份，dedecms默认在<code>dede_member</code>中会生成一个<code>userid</code>为admin，<code>mid</code>为1的用户</p>
+<h3 id="验证用户是否登陆过"><a href="#验证用户是否登陆过" class="headerlink" title="验证用户是否登陆过"></a>验证用户是否登陆过</h3><p><strong>用户中心模块</strong>在判断用户是否登陆会使用 <code>MemberLogin</code> 类的 <code>IsLogin()</code> 方法，该方法通过实例化的 <code>MemberLogin</code> 对象的 <code>M_ID</code> 值是否大于0为判断依据，大于0即为登陆状态</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">IsLogin</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function"></span>&#123;<br>        <span class="hljs-keyword">if</span>(<span class="hljs-keyword">$this</span>-&gt;M_ID &gt; <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span> <span class="hljs-literal">TRUE</span>;<br>        <span class="hljs-keyword">else</span> <span class="hljs-keyword">return</span> <span class="hljs-literal">FALSE</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>然后查看一下 <code>MemberLogin</code> 对象实例化时的构造函数，<code>M_ID</code> 的值将来自于cookie，在获取cookie时会对用户身份做验证，==需要注意的是，通过认证后，<code>M_ID</code>还会通过GetNum()或intval()转换成数字类型，这是一个关键点，在后面将利用这一点把用户名转换成数字类型==</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"><span class="hljs-variable">$kptime</span> = -<span class="hljs-number">1</span>, <span class="hljs-variable">$cache</span>=<span class="hljs-literal">FALSE</span></span>)</span><br><span class="hljs-function"></span>&#123;<br>			<span class="hljs-keyword">$this</span>-&gt;M_ID = <span class="hljs-keyword">$this</span>-&gt;GetNum(GetCookie(<span class="hljs-string">&quot;DedeUserID&quot;</span>));<br>  		<span class="hljs-keyword">if</span>(<span class="hljs-keyword">empty</span>(<span class="hljs-keyword">$this</span>-&gt;M_ID))<br>      &#123;<br>            <span class="hljs-keyword">$this</span>-&gt;ResetUser();<br>      &#125;<span class="hljs-keyword">else</span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;M_ID = intval(<span class="hljs-keyword">$this</span>-&gt;M_ID);<br></code></pre></td></tr></table></figure>
+
+<p><code>GetNum()</code>用于接收整数，<code>GetCookie()</code>用于获取cookie值，这里就知道<code>M_ID</code>大致来与cookie中的某个整数值，似乎可控的感觉，我们能想到的利用方式是通过控制cookie为不同的id值，造成越权漏洞</p>
+<p>跟进 <code>GetCookie(&quot;DedeUserID&quot;)</code> 看看细节</p>
+<ul>
+<li><code>$key</code>传入的值为<strong>DedeUserID</strong>，<code>$cfg_cookie_encode</code> 用于加密cookie</li>
+</ul>
+<img src="img/dedecms/image-20210720113513361.png" srcset="/img/loading.gif" lazyload alt="image-20210720113513361" style="zoom: 50%;" />
+
+<ul>
+<li>第一个if判断条件，<code>$_COOKIE[&#39;DedeUserID&#39;]</code> 和 <code>$_COOKIE[&#39;DedeUserID__ckMd5&#39;]</code> 有值即可</li>
+<li>第二个if判断条件，<code>$_COOKIE[&#39;DedeUserID__ckMd5&#39;]</code> 等于使用 <code>$cfg_cookie_encode</code> 和<code>$_COOKIE[&#39;DedeUserID&#39;]</code> 16位md5加密值相同即可</li>
+</ul>
+<p>如果通过判断，<code>M_ID</code>将会等于cookie中<code>DedeUserID</code>的值，也就是对应用户id的身份</p>
+<p><code>$_COOKIE[&#39;DedeUserID__ckMd5&#39;]</code> 为用户uid的md5加密值，没有dedecms的cookie 加密值是无法伪造这个加密值，也就是我们无法构造任意uid用户通过验证造成越权漏洞</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">//include/helpers/cookie.helper.php</span><br><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">GetCookie</span>(<span class="hljs-params"><span class="hljs-variable">$key</span></span>)</span><br><span class="hljs-function"></span>&#123;<br>        <span class="hljs-keyword">global</span> <span class="hljs-variable">$cfg_cookie_encode</span>;<br>        <span class="hljs-keyword">if</span>( !<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_COOKIE</span>[<span class="hljs-variable">$key</span>]) || !<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_COOKIE</span>[<span class="hljs-variable">$key</span>.<span class="hljs-string">&#x27;__ckMd5&#x27;</span>]) )<br>        &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;&#x27;</span>;<br>        &#125;<br>        <span class="hljs-keyword">else</span><br>        &#123;<br>            <span class="hljs-keyword">if</span>(<span class="hljs-variable">$_COOKIE</span>[<span class="hljs-variable">$key</span>.<span class="hljs-string">&#x27;__ckMd5&#x27;</span>]!=substr(md5(<span class="hljs-variable">$cfg_cookie_encode</span>.<span class="hljs-variable">$_COOKIE</span>[<span class="hljs-variable">$key</span>]),<span class="hljs-number">0</span>,<span class="hljs-number">16</span>))<br>            &#123;<br>                <span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;&#x27;</span>;<br>            &#125;<br>            <span class="hljs-keyword">else</span><br>            &#123;<br>                <span class="hljs-keyword">return</span> <span class="hljs-variable">$_COOKIE</span>[<span class="hljs-variable">$key</span>];<br>            &#125;<br>        &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>但是在<strong>会员空间信息加载时</strong>我们知道通过 <code>$last_vid</code> 也可以写入cookie，也能利用<code>$cfg_cookie_encode</code>加密数据，把这的加密数据放到<code>GetCookie()</code>中是能通过验证的</p>
+<p>但是 <code>$last_vid</code> 只能为用户名，放到，如果直接将 <code>$last_vid</code> 转化为用户id，那么在<strong>会员空间信息加载时</strong>会因为用户不存在而退出程序。如果用户名和用户id相同则不担心了，但是系统限制了用户名不能过短</p>
+<p>不过却可以利用<code>intval()</code>将用户名转换成数字类型，从而 <code>$last_vid</code> 可以为存在的用户名，也可以转换成任意用户的id</p>
+<h3 id="终于开始验证漏洞了"><a href="#终于开始验证漏洞了" class="headerlink" title="终于开始验证漏洞了"></a>终于开始验证漏洞了</h3><p>按需求，我们需要注册一个用户名，这个用户名在 <code>intval()</code> 转换后能为一个用户的id</p>
+<p>1）注册一个名为 <code>1admin</code> 的用户，<code>intval(&quot;1admin&quot;)</code>将为1，我们将会操控到用户id为1的用户，然后利用 <code>1admin</code> 获取一个__ckMd5</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">http:<span class="hljs-regexp">//</span>dede.test:<span class="hljs-number">8888</span><span class="hljs-regexp">/member/i</span>ndex.php?uid=<span class="hljs-number">1</span>admin<br></code></pre></td></tr></table></figure>
+
+<img src="img/dedecms/image-20210720184513525.png" srcset="/img/loading.gif" lazyload alt="image-20210720184513525" style="zoom:50%;" />
+
+<p>2）利用结果通过验证</p>
+<img src="img/dedecms/image-20210720184556760.png" srcset="/img/loading.gif" lazyload alt="image-20210720184556760" style="zoom:50%;" />
+
+<p>这里有个有趣的利用点，注意了！直接通过登陆框登陆admin用户是进不了个人主页的，因为dedecms默认禁止admin用户登陆会员中心。如果通过上面的方法却可以实现amdin用户登陆，有个什么好处呢，会员中心具有修改密码的功能，如果是管理员修改密码，会同时修改掉后台<code>dede_admin</code>表的密码，这里就可以实现前台到后台的突破，而后台的任意文件上传就很轻松了吧</p>
+<img src="img/dedecms/image-20210721112814417.png" srcset="/img/loading.gif" lazyload alt="image-20210721112814417" style="zoom:50%;" />
+
+<p>最后梳理一下流程，流程图如下：</p>
+<img src="img/dedecms/3.png" srcset="/img/loading.gif" lazyload alt="3" style="zoom:50%;" />
+
+<h1 id="0x03-小结"><a href="#0x03-小结" class="headerlink" title="0x03 小结"></a>0x03 小结</h1><p>本次主要采用的是功能定向审计，发现这种方式对文件上传漏洞的审计效果还不错，该方式确实速度很快，不过也会忽略很多关键点，最后的感受是，代码审计时不一定只有一种审计方式，除了功能定向审计，我们还可以利用通读代码的方式去做粗略的全局分析，通过敏感关键词回溯去审计一些较难发现的漏洞</p>
+<p>另外一个感受就是在登陆口找回密码这种具有一定逻辑的代码审计上，往往需要先梳理清程序的逻辑，如果具有一定的开发意识审计这种代码会快一些。</p>
+<p>参考：</p>
+<p>dedecms官网：<a target="_blank" rel="noopener" href="http://www.dedecms.com/">http://www.dedecms.com/</a></p>
+<p>Dedecms 最新版漏洞收集：<a target="_blank" rel="noopener" href="https://blog.szfszf.top/article/25/">https://blog.szfszf.top/article/25/</a></p>
+<p>前台任意用户登录漏洞分析（修改admin后台密码）：<a target="_blank" rel="noopener" href="http://blog.nsfocus.net/dedecms-loophole-2/">http://blog.nsfocus.net/dedecms-loophole-2/</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/php%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">php代码审计</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/PHP/">PHP</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">代码审计</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/09/12/electron/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">如何审计 Electron 应用代码</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/09/12/phpipam/">
+                        <span class="hidden-mobile">PHPIPAM 代码审计</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+              <!-- Comments -->
+              <article class="comments" id="comments" lazyload>
+                
+                  
+                
+                
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"KoUUnhC8sqDPadKwA0C4f83s-gzGzoHsz","appKey":"FLKClsTKX9X9TPMSO1z9FK1T","placeholder":"说点什么","path":"window.location.pathname","avatar":"robohash","meta":["nick","mail","link"],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false,"requiredFields":[]},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+              </article>
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

