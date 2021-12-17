@@ -1,0 +1,632 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/icon.png">
+  <link rel="icon" href="/img/icon.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="jelly">
+  <meta name="keywords" content="">
+  
+  <title>代理与vpn - jelly&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":"14de5c0cf6db6044f06b32ef50694a98","google":"G-1S553HH16G","gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Jelly's blog</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/doll.webp') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="代理与vpn">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-11-29 01:57" pubdate>
+        2021年11月29日 凌晨
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.5k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      16
+       分钟
+    </span>
+  
+
+  
+  
+    
+      <!-- 不蒜子统计文章PV -->
+      <span id="busuanzi_container_page_pv" style="display: none">
+        <i class="iconfont icon-eye" aria-hidden="true"></i>
+        <span id="busuanzi_value_page_pv"></span> 次
+      </span>
+    
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">代理与vpn</h1>
+            
+              <p class="note note-info">
+                
+                  本文最后更新于：6 分钟前
+                
+              </p>
+            
+            <div class="markdown-body">
+              <h1 id="先了解下-OSI-7层网络模型"><a href="#先了解下-OSI-7层网络模型" class="headerlink" title="先了解下 OSI 7层网络模型"></a>先了解下 OSI 7层网络模型</h1><img src="img/代理与vpn/7bf72af07226ccbea19ac48d31373a60-20211207101218257.png" srcset="/img/loading.gif" lazyload alt="7bf72af07226ccbea19ac48d31373a60.png" style="zoom:50%;" />
+
+<p>每层具有的协议如下：</p>
+<table>
+<thead>
+<tr>
+<th>OSI对应的层</th>
+<th>功能</th>
+<th>TCP/IP对应的协议</th>
+<th>设备</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>应用层</td>
+<td>文件传输，电子邮件，文件服务，虚拟终端</td>
+<td>TFTP，HTTP，SNMP，FTP，SMTP，DNS，Telnet</td>
+<td>/</td>
+</tr>
+<tr>
+<td>表示层</td>
+<td>数据格式化，代码转换，数据加密</td>
+<td>/</td>
+<td>/</td>
+</tr>
+<tr>
+<td>会话层</td>
+<td>建立管理和维护会话</td>
+<td>/</td>
+<td>/</td>
+</tr>
+<tr>
+<td>传输层</td>
+<td>建立管理维护端到端的连接</td>
+<td>TCP，UDP</td>
+<td>四层交换机和四层路由</td>
+</tr>
+<tr>
+<td>网络层</td>
+<td>IP选址及路由</td>
+<td>IP，ICMP，RIP，OSPF，BGP，IGMP</td>
+<td>三层交换机和路由</td>
+</tr>
+<tr>
+<td>数据链路层</td>
+<td>传输有地址的帧以及错误检测功能</td>
+<td>ARP，RARP，MTU，SLIP，CSLIP，PPP</td>
+<td>网桥、交换机、网卡</td>
+</tr>
+<tr>
+<td>物理层</td>
+<td>以二进制数据形式在物理媒体上传输数据</td>
+<td></td>
+<td>中继器、集线器、双绞线</td>
+</tr>
+</tbody></table>
+<h1 id="什么是代理？"><a href="#什么是代理？" class="headerlink" title="什么是代理？"></a>什么是代理？</h1><p><strong>代理（proxy）</strong>也称网络代理，是一种特殊的网络服务，允许一个终端（一般为客户端）通过这个服务与另外一个终端（一般为服务器）进行非直接的连接</p>
+<p>提供代理服务的网络终端称为<strong>代理服务器（proxy server）</strong></p>
+<p>一个完整的代理请求过程为：客户端首先根据代理服务器所使用的<strong>代理协议</strong>，与代理服务器创建连接，接着按照协议请求对目标服务器创建连接、或者获得目标服务器的指定资源</p>
+<h1 id="常用代理协议"><a href="#常用代理协议" class="headerlink" title="常用代理协议"></a>常用代理协议</h1><p>常用的代理协议有 Socks 和 HTTP(HTTPS)</p>
+<h2 id="Socks"><a href="#Socks" class="headerlink" title="Socks"></a>Socks</h2><p>SOCKS 是 SOCKet Secure 的缩写，根据 OSI 模型，SOCKS 是<strong>会话层的协议</strong>，位于表示层与传输层之间</p>
+<p>SOCKS 代理协议只是简单地传递数据包，而不必关心是何种应用协议，所以速度比较快。SOCKS代理协议是1990年开发的，</p>
+<p>SOCKS 协议具有 3 个常用版本：</p>
+<ul>
+<li>SOCKS4 - 只支持 TCP 应用</li>
+<li>SOCKS4a - 是 SOCKS4 协议的简单扩展，允许客户端对无法解析域名的目的主机进行访问</li>
+<li>SOCKS5 - 比 SOCKS4a 多了验证、IPv6、UDP支持</li>
+</ul>
+<blockquote>
+<p>这里要理解一个知识点，SOCKS 是会话层的协议，位于传输层之上，所以 SOCKS 协议可以转发 TCP/UDP 协议的数据包。而传输层之下的数据包，如网络层的 ICMP 数据包就无法被 SOCKS 协议处理。实际中我们可以尝试挂上 SOCKS 代理 ping 一下 google 测试一下</p>
+</blockquote>
+<h2 id="HTTP"><a href="#HTTP" class="headerlink" title="HTTP"></a>HTTP</h2><p>HTTP 协议这里就不多说了，使用 HTTP 协议的代理服务也称为 HTTP 代理，对应的还有 HTTPS 代理</p>
+<h1 id="什么是VPN？"><a href="#什么是VPN？" class="headerlink" title="什么是VPN？"></a>什么是VPN？</h1><p><strong>虚拟专用网络</strong>（英语：virtual private network，缩写：<strong>VPN</strong>）是指在公用网络上建立专用网络，进行加密通讯</p>
+<p>VPN 会涉及隧道协议和加密技术，很多时候会看到人们统称为 VPN 协议</p>
+<p>VPN 技术最早出现在20世纪90年代，那时的通信数据都是不加密的广播传输（要知道我们使用互联网时，发出的每个请求都会经过数个路由器，所以从这个角度上讲，我们的通信并不安全），像银行这种单位对隐私十分看中，想要保证隐私的通信往往需要铺设昂贵的专线，VPN 技术就是在这种情况下出现的</p>
+<p>可以看出 VPN 最早的目的是在公用网络上搭建一条虚拟专用的网络隧道，并对其中的通信数据做了加密。然而人们却发现了一个意外的收获，比如客户利用 VPN 隧道成功和银行的服务器通信，这时他会发现银行位于内部网络其他的终端也能访问，位于国内的我们也便经常利用这一项技术完成翻墙的操作</p>
+<h1 id="常用的-VPN-协议"><a href="#常用的-VPN-协议" class="headerlink" title="常用的 VPN 协议"></a>常用的 VPN 协议</h1><p>下面介绍一些常用的 VPN 协议</p>
+<ul>
+<li>PPTP - Point to Point Tunneling Protocol，点对点隧道协议，初代 VPN 协议，于 1996年发布，该协议将PPP数据包封装在IP数据包内通过IP网络 (如Internet或Intranet) 进行传送</li>
+<li>L2TP/IPsec - L2TP 又叫第2层隧道协议，本身不具备加密功能，往往需要和 IPsec 协议配置实现加密传输，所以该方法速度会偏慢</li>
+<li>OpenVPN - 一种开源、跨平台、也是目前最常用的 VPN 加密协议</li>
+<li>Shadowsocks - 是一种免费且开源的加密代理/VPN 协议。它是一款基于 Socks5 的代理协议</li>
+</ul>
+<h1 id="代理和VPN的区别"><a href="#代理和VPN的区别" class="headerlink" title="代理和VPN的区别"></a>代理和VPN的区别</h1><p>简单来说，VPN 和代理是两种常用的上网方式，这两者的基本功能都十分适合我们这种职业，甚至在我们的需求面前，两者的功能相差并不大，以至于很多人把这两者搞混淆。我们需要从以下几个方面去弄懂代理和VPN</p>
+<ul>
+<li>匿名性</li>
+</ul>
+<p>代理和VPN的操作非常相似。它们都位于请求的中间，起到隐藏 IP 的效果</p>
+<p>VPN 和代理两者的工作流程如下：</p>
+<img src="img/代理与vpn/vpn-vs-proxy-workflow-difference-zh.jpeg" srcset="/img/loading.gif" lazyload alt="vpn-vs-proxy-workflow-difference-zh" style="zoom:80%;" />
+
+<ul>
+<li>隐私性</li>
+</ul>
+<p>我们通常使用的代理来自于供应商，其中代理服务器可能会记录我们的上网日志，VPN 服务商也可能会记录日志。最好的选择还是自己搭建代理服务器会VPN服务器</p>
+<ul>
+<li>加密</li>
+</ul>
+<p>毫无疑问 VPN 协议加密做的更好</p>
+<ul>
+<li>协议</li>
+</ul>
+<p>两者最大的区别首先就是使用的协议：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>协议名称</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>VPN</td>
+<td>OpvenVPN、IPsec、IKEv2、PPTP、L2TP、WireGuard等</td>
+</tr>
+<tr>
+<td>代理</td>
+<td>HTTP、HTTPS、SOCKS、FTP、RTSP等</td>
+</tr>
+</tbody></table>
+<p>VPN 协议大多是作用在 OSI 的第二层和第三层之间，所以使用 VPN 时，几乎能转发所有的流量</p>
+<p>参考：</p>
+<p>OSI 七层网络模型：<a target="_blank" rel="noopener" href="https://www.cxybb.com/article/uonele/106735758">https://www.cxybb.com/article/uonele/106735758</a></p>
+<p><a target="_blank" rel="noopener" href="https://laravelacademy.org/post/9336">https://laravelacademy.org/post/9336</a></p>
+<p>代理（服务器）是什么：<a target="_blank" rel="noopener" href="https://pandavpnpro.com/blog/zh-cn/what-is-proxy">https://pandavpnpro.com/blog/zh-cn/what-is-proxy</a> </p>
+<p>VPN 和代理的区别的有哪些：<a target="_blank" rel="noopener" href="https://pandavpnpro.com/blog/zh-cn/vpn-vs-proxy-difference">https://pandavpnpro.com/blog/zh-cn/vpn-vs-proxy-difference</a></p>
+<p>VPN 协议详解：<a target="_blank" rel="noopener" href="https://pandavpnpro.com/blog/zh-cn/vpn-protocol">https://pandavpnpro.com/blog/zh-cn/vpn-protocol</a></p>
+<p>VPN协议：<a target="_blank" rel="noopener" href="https://www.triadprogram.com/vpn-protocol/">https://www.triadprogram.com/vpn-protocol/</a></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a>
+                    
+                      <a class="hover-with-bg" href="/tags/%E5%B7%A5%E5%85%B7/">工具</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/12/osint/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">网络空间搜索引擎使用</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/11/maccms/">
+                        <span class="hidden-mobile">MacCMS 实战审计</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+              <!-- Comments -->
+              <article class="comments" id="comments" lazyload>
+                
+                  
+                
+                
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"KoUUnhC8sqDPadKwA0C4f83s-gzGzoHsz","appKey":"FLKClsTKX9X9TPMSO1z9FK1T","placeholder":"说点什么","path":"window.location.pathname","avatar":"robohash","meta":["nick","mail","link"],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false,"requiredFields":[]},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+              </article>
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+  <div class="statistics">
+    
+    
+
+    
+      
+        <!-- 不蒜子统计PV -->
+        <span id="busuanzi_container_site_pv" style="display: none">
+            总访问量 
+            <span id="busuanzi_value_site_pv"></span>
+             次
+          </span>
+      
+      
+        <!-- 不蒜子统计UV -->
+        <span id="busuanzi_container_site_uv" style="display: none">
+            总访客数 
+            <span id="busuanzi_value_site_uv"></span>
+             人
+          </span>
+      
+    
+  </div>
+
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
